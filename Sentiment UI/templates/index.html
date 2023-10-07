@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sentiment Analysis</title>
+  <!-- Include jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+
+<h1>Sentiment Analysis</h1>
+
+<!-- Text input -->
+<label for="text">Enter text:</label>
+<input type="text" id="text" name="text">
+
+<!-- Submit button -->
+<button id="submit">Predict</button>
+
+<!-- Display result -->
+<h2>Result:</h2>
+<p id="result"></p>
+
+<!-- Display detailed error -->
+<h2>Error Details:</h2>
+<p id="error-details"></p>
+
+<script>
+  $(document).ready(function() {
+    // Attach a click event handler to the "Predict" button
+    $("#submit").click(function() {
+      // Get the text input value
+      const text = $("#text").val();
+
+      // Send an AJAX POST request to the Flask server
+      $.ajax({
+        url: 'http://127.0.0.1:5000/predict', // Flask endpoint
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ "text": text }), // Convert text to JSON format
+        success: function(data) {
+          // Update the result on the page
+          $("#result").text(data.prediction === 1 ? "Positive" : "Negative");
+          $("#error-details").text(''); // Clear any previous error messages
+        },
+        error: function(xhr, status, error) {
+          // Log any errors and display an error message
+          console.error(error);
+          $("#result").text('Error occurred');
+          $("#error-details").text(`Status: ${status}, Error: ${error}`);
+        }
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
