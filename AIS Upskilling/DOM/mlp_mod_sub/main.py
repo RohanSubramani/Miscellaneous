@@ -2,7 +2,7 @@ import argparse
 import torch as t
 import torch.nn as nn
 import torch.optim as optim
-from helper import generate_exhaustive_modular_subtraction_data, load_dataloaders, MLP, train, evaluate
+from helper import create_directories,generate_exhaustive_modular_subtraction_data, load_dataloaders, MLP, train, evaluate
 
 def main():
     # Argument parsing
@@ -13,6 +13,8 @@ def main():
     parser.add_argument('--batch_size', '-b', type=int, default=32, help="Batch size for training")
     parser.add_argument('--hn', type=int, default=100, help="Number of hidden neurons")
     args = parser.parse_args()
+
+    create_directories()
     
     train_loader, val_loader, test_loader = load_dataloaders(args.mod, args.batch_size)
     
@@ -24,7 +26,7 @@ def main():
     
     # Evaluate model
     evaluate(model, test_loader)
-    t.save(model.state_dict(), f"model_{args.mod}.pt")
+    t.save(model.state_dict(), f"./models/model_{args.mod}.pt")
     
     # User interaction loop
     model.eval()

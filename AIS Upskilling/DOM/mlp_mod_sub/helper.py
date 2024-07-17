@@ -7,6 +7,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+def create_directories():
+    os.makedirs('models', exist_ok=True)
+    os.makedirs('data', exist_ok=True)
+
 # Generate all possible pairs (a, b) and their modular subtraction results
 def generate_exhaustive_modular_subtraction_data(mod, train_split=0.6, val_split=0.2):
     # Generate data
@@ -37,18 +41,18 @@ def generate_exhaustive_modular_subtraction_data(mod, train_split=0.6, val_split
     test_df = pd.DataFrame(test_data, columns=['A', 'B', 'Result'])
 
     # Save DataFrames to CSV files
-    train_df.to_csv(f'train_{mod}.csv', index=False)
-    val_df.to_csv(f'val_{mod}.csv', index=False)
-    test_df.to_csv(f'test_{mod}.csv', index=False)
+    train_df.to_csv(f'./data/train_{mod}.csv', index=False)
+    val_df.to_csv(f'./data/val_{mod}.csv', index=False)
+    test_df.to_csv(f'./data/test_{mod}.csv', index=False)
 
     print(f"Datasets generated and saved to 'train_{mod}.csv', 'val_{mod}.csv', and 'test_{mod}.csv'")
 
 # Load datasets from CSV files and create DataLoader objects
 def load_dataloaders(mod, batch_size):
     # Check for CSV files and generate them if not available
-    train_file = f'train_{mod}.csv'
-    val_file = f'val_{mod}.csv'
-    test_file = f'test_{mod}.csv'
+    train_file = f'./data/train_{mod}.csv'
+    val_file = f'./data/val_{mod}.csv'
+    test_file = f'./data/test_{mod}.csv'
 
     if not (os.path.exists(train_file) and os.path.exists(val_file) and os.path.exists(test_file)):
         generate_exhaustive_modular_subtraction_data(mod)
@@ -89,6 +93,7 @@ def train(model, train_loader, val_loader, epochs=10, lr=0.001):
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
     total_batches = epochs * (len(train_loader) + len(val_loader))
+    avg_val_loss = 100 # Just for first epoch, before first validation
     with tqdm(total=total_batches, desc='Training Progress', leave=True) as pbar:
         for epoch in range(epochs):
             model.train()
@@ -102,7 +107,7 @@ def train(model, train_loader, val_loader, epochs=10, lr=0.001):
                 running_loss += loss.item()
                 avg_train_loss = running_loss / (i + 1)
                 
-                pbar.set_postfix({'Epoch': epoch + 1, 'Train Loss': avg_train_loss})
+                pbar.set_postfix({'Epoch': epoch + 1, 'Train Loss': avg_train_loss, 'Val Loss': avg_val_loss})
                 pbar.update(1)
 
             model.eval()
@@ -114,10 +119,10 @@ def train(model, train_loader, val_loader, epochs=10, lr=0.001):
                     val_loss += loss.item()
                     avg_val_loss = val_loss / (j + 1)
                     
-                    pbar.set_postfix({'Epoch': epoch + 1, 'Val Loss': avg_val_loss})
+                    pbar.set_postfix({'Epoch': epoch + 1, 'Train Loss': avg_train_loss, 'Val Loss': avg_val_loss})
                     pbar.update(1)
 
-            tqdm.write(f"Epoch [{epoch + 1}/{epochs}], Train Loss: {avg_train_loss:.4f}, Validation Loss: {avg_val_loss:.4f}")
+            # tqdm.write(f"Epoch [{epoch + 1}/{epochs}], Train Loss: {avg_train_loss:.4f}, Validation Loss: {avg_val_loss:.4f}")
     
     print("Training finished.")
 

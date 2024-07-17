@@ -1,3 +1,1 @@
-#!/bin/bash
-
-python main.py -m 47 -e 100 -l .001 -b 32 -hn 100
+python main.py -m 47 -e 3000 -l .001 -b 128 --hn 1000
