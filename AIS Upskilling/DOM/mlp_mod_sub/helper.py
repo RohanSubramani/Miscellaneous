@@ -88,7 +88,7 @@ class MLP(nn.Module):
         return out
 
 # Train the model
-def train(model, train_loader, val_loader, epochs=10, lr=0.001):
+def train(model, train_loader, val_loader, epochs=100, lr=0.001):
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
