@@ -1,0 +1,1 @@
+python main.py -m 47 -e 200 -l .001 -b 2048 --hn 1000
