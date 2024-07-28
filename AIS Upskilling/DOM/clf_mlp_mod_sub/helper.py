@@ -231,10 +231,29 @@ def run_experiments(moduli, hidden_layer_configs, batch_size, epochs, lr, result
                 results[hidden_layers_str]['moduli'].append(mod)
                 results[hidden_layers_str]['accuracies'].append(accuracy)
 
-    # Save results to file
-    with open(results_file, 'w') as f:
-        json.dump(results, f, indent=4)
+                results = sort_results(results)
 
+                # Save results to file
+                with open(results_file, 'w') as f:
+                    json.dump(results, f, indent=4)
+
+def sort_results(results):
+    sorted_results = {}
+
+    for hidden_layers, mod_acc_dict in results.items():
+        moduli = mod_acc_dict["moduli"]
+        accuracies = mod_acc_dict["accuracies"]
+        
+        # Zip them together, sort by moduli, and unzip
+        mod_acc_pairs = sorted(zip(moduli, accuracies))
+        sorted_moduli, sorted_accuracies = zip(*mod_acc_pairs)
+        
+        sorted_results[hidden_layers] = {
+            "moduli": list(sorted_moduli),
+            "accuracies": list(sorted_accuracies)
+        }
+    
+    return sorted_results
 
 def get_results(results_file='results.json'):
     if os.path.exists(results_file):
