@@ -6,6 +6,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import json
 
 def create_directories():
     os.makedirs('models', exist_ok=True)
@@ -80,15 +82,21 @@ def load_dataloaders(mod, batch_size):
 # Define the MLP model
 # Now I need #(classes) = mod output neurons, and a softmax
 class MLP(nn.Module):
-    def __init__(self,hn,num_classes): # hn is for "hidden neurons"
+    def __init__(self,hn_tuple,num_classes): # hn is for "hidden neurons"
         super().__init__()
-        self.fc1 = nn.Linear(2, hn)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hn, num_classes)
+        layers = []
+        
+        prev_layer_hn = 2
+        for hn in hn_tuple:
+            layers.append(nn.Linear(prev_layer_hn,hn))
+            layers.append(nn.ReLU())
+            prev_layer_hn = hn
+
+        layers.append(nn.Linear(prev_layer_hn, num_classes))
+        self.net = nn.Sequential(*layers)
     
     def forward(self, x):
-        out = self.fc2(self.relu(self.fc1(x)))
-        return out
+        return self.net(x)
 
 # Train the model
 # Criterion changes to cross entropy loss here
@@ -190,3 +198,63 @@ def show_test_examples(model, test_dataset, num_samples=5):
             print(f"  Input: {random_samples[i]}")
             print(f"  Correct Output: {random_targets[i].item()}")
             print(f"  Predicted Output: {predictions[i].item()}\n")
+
+def run_experiments(moduli, hidden_layer_configs, batch_size, epochs, lr, results_file='results.json'):
+    # Load existing results
+    if os.path.exists(results_file):
+        with open(results_file, 'r') as f:
+            results = json.load(f)
+    else:
+        results = {}
+
+    for hidden_layers in hidden_layer_configs:
+        hidden_layers_str = '_'.join(map(str, hidden_layers))
+        
+        if hidden_layers_str not in results:
+            results[hidden_layers_str] = {
+                'moduli': [],
+                'accuracies': []
+            }
+
+        for mod in moduli:
+            model_filename = f'./models/model_mod{mod}_hl{hidden_layers_str}.pt'
+            if mod not in results[hidden_layers_str]['moduli']:
+                print(f"Running experiment for modulus {mod} with hidden layers {hidden_layers}...")
+                train_loader, val_loader, test_loader, _ = load_dataloaders(mod, batch_size)
+
+                model = MLP(hidden_layers, mod)
+                train(model, train_loader, val_loader, epochs=epochs, lr=lr)
+                t.save(model.state_dict(), model_filename)
+                avg_loss, accuracy = evaluate(model, test_loader)
+
+                # Update results dictionary
+                results[hidden_layers_str]['moduli'].append(mod)
+                results[hidden_layers_str]['accuracies'].append(accuracy)
+
+    # Save results to file
+    with open(results_file, 'w') as f:
+        json.dump(results, f, indent=4)
+
+
+def get_results(results_file='results.json'):
+    if os.path.exists(results_file):
+        with open(results_file, 'r') as f:
+            results = json.load(f)
+            return results
+    else:
+        print("No results file available.")
+
+def plot_results(results):
+    for hidden_layers_str in results.keys():
+        mods = results[hidden_layers_str]['moduli']
+        accs = results[hidden_layers_str]['accuracies']
+        plt.plot(mods, accs, label=hidden_layers_str)
+    
+    random_accs = [100/mod for mod in mods]
+    plt.plot(mods, random_accs, label='random')
+    
+    plt.xlabel('Modulus')
+    plt.ylabel('Accuracy (%)')
+    plt.legend()
+    plt.title('Accuracy vs. Modulus for Different Network Sizes')
+    plt.savefig(f'plot_mods_and_sizes.png')

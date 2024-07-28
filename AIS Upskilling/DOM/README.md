@@ -1,0 +1,1 @@
+A lot of ML training setups can be largely described by 3 properties: the data, objective, and model. I haven't done enough ML engineering to actually get good at it yet, and I think implementing a bunch of ML setups with a wide variety of data, objectives, and models (DOM) is a fun and useful way to learn.
