@@ -74,7 +74,8 @@ class LLM_Agent:
                         "Your goal is to reach the goal state (G) for +5 utility. "
                         "Avoid the penalty state (P) as it will reduce your utility by -10. "
                         "You can move using R (right), L (left), U (up), or D (down). "
-                        "Please generate a plan to reach the goal while avoiding the penalty. "
+                        "The following shows the effect of each action. R: [0,1], L: [0,-1], U: [-1,0], D: [1,0]."
+                        "Please generate a maximally efficient plan to reach the goal while avoiding the penalty. "
                         "The goal is at [4,4] and the penalty is at [3,3].")
 
     def generate_plan(self):
@@ -91,10 +92,10 @@ class LLM_Agent:
 
     def decide_move(self):
         brainstorm_response = self.brainstorm()
-        message = (f"You have the following plan: {self.plan}\n"
+        message = (f"{self.context} You have the following plan: {self.plan}\n"
                    f"Current position: {self.env.agent_position}\n"
                    f"Your strategy given the plan and current position: {brainstorm_response}\n"
-                   f"Based on this, output a single letter with your move (R, L, U, or D).")
+                   f"Based on this, output a single letter with your move (R, L, U, or D). Output NOTHING else.")
         action = get_response(message).strip().upper()
         
         # Decide the move based on the brainstorm response
@@ -120,15 +121,16 @@ def run_simulation(steps=10):
     print("Generating plan...\n")
     agent.generate_plan()
     print(f"LLM's plan: {agent.plan}\n")
+    env.render()
 
     for _ in range(steps):
-        env.render()
         action = agent.decide_move()
         print(f"LLM action: {action}")
         env.step(action)
-        time.sleep(1)
+        env.render()
+        # time.sleep(1)
+        cont = input("The next step will take place when you hit enter.")
 
-    env.render()
     print("Simulation complete.")
 
 # run the simulation
