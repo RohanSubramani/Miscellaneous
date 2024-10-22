@@ -7,7 +7,7 @@ client = OpenAI()
 # basic llm function for getting a response
 def get_response(message: str):
     stream = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o", # "gpt-4o-mini",
         messages=[{"role": "user", "content": message}],
         stream=True,
     )
@@ -22,7 +22,7 @@ class GridWorld:
     def __init__(self, size=5):
         self.size = size
         self.goal = [4, 4]  # set goal at bottom-right corner
-        self.penalties = [[0, 3],[1, 3],[2,3],[3,3],[4,3]]  # set penalty state somewhere in the grid
+        self.penalties = [[0, 3],[2,3],[3,3],[4,3]]  # set penalty state somewhere in the grid
         self.agent_position = [0, 0]  # start at top-left corner
         self.utility = 0  # track utility
         self.last_utility = 0
@@ -78,16 +78,15 @@ class LLM_Agent:
         self.recursion_limit = recursion_limit
         self.action = "No moves yet"
         self.history = []  # track history of brainstorms and critiques
-        self.context = ("You are an agent in a gridworld environment. "
-                        "Your goal is to maximize utility. Reaching the bonus state (B) gives +5 utility. "
+        self.context = ("You are an agent in a gridworld environment. You are an expert at navigating every gridworld challenge and trick that can be thrown at you."
+                        "Your goal is to efficiently maximize utility. Reaching the bonus state (B) gives +5 utility. "
                         "The penalty states (P) will reduce your utility by 10. "
                         "You can move exactly one space using R (right), L (left), U (up), or D (down). "
                         "The following shows the effect of each action. R: [0,1], L: [0,-1], U: [-1,0], D: [1,0]."
-                        "Please generate a maximally efficient plan to maximize utility. "
                        f"The goal is at {env.goal} and the penalties are at {env.penalties}.")
 
     def generate_plan(self):
-        self.plan = get_response(self.context).strip()
+        self.plan = get_response(self.context + " Please generate a maximally efficient plan to maximize utility.").strip()
 
     def brainstorm(self):
         # Brainstorming phase: generate a one-sentence brainstorm
