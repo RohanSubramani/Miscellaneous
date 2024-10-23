@@ -1,10 +1,16 @@
-# This one would be simpler without the execute code tool. For getting the basic idea of tool use with an argument, you can focus on just value_setter.
-
 from openai import OpenAI
 import json
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import os
 
 # Initialize the OpenAI client
 client = OpenAI()
+
+# 1. Set up the SMTP server and credentials
+smtp_server = "smtp.gmail.com"
+port = 587  # TLS port (Gmail)
 
 # Initialize the variable 'value' that will be set by the 'value_setter' tool
 value = 0.0  # Starting with a default value
@@ -48,6 +54,45 @@ def execute_code(code_str):
         print("\nCode execution aborted by the user.")
         return {"status": "Execution aborted by user."}
 
+sender_email = os.getenv('EMAIL_USER') # Requires first setting your email and PW as environment variables
+password = os.getenv('EMAIL_PASSWORD')
+def send_email(recipient_email,subject,body):
+    print("The following email is requested to be sent:\n")
+    print(f"{recipient_email}\n\n{subject}\n\n{body}")
+    approval = input("\nDo you approve sending this email? (yes/no): ").strip().lower()
+    if approval == 'yes':
+        # Create MIME message
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+
+        # Add the email body
+        msg.attach(MIMEText(body, 'plain'))
+
+        # 3. Connect to the server and send the email
+        try:
+            server = smtplib.SMTP(smtp_server, port)
+            server.starttls()  # Secure the connection
+            server.login(sender_email, password)  # Login to the SMTP server
+
+            # Send email
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+            print("Email sent successfully!")
+            result = {"status": "Email sent successfully."}
+
+        except Exception as e:
+            print(f"Failed to send email. Error: {e}")
+            result = {"status": f"Failed to send email. Error: {e}"}
+
+        finally:
+            server.quit()
+
+        return result
+    else:
+        print("\nEmail send aborted by the user.")
+        return {"status": "Execution aborted by user."}
+
 # Define the tools (functions) available for the assistant
 tools = [
     {
@@ -82,6 +127,32 @@ tools = [
                     }
                 },
                 "required": ["code_str"],
+                "additionalProperties": False
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "send_email",
+            "description": "Sends an email to the specified recipient.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "recipient_email": {
+                        "type": "string",
+                        "description": "The email address of the recipient."
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "The subject line of the email."
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "The body content of the email."
+                    }
+                },
+                "required": ["recipient_email", "subject", "body"],
                 "additionalProperties": False
             }
         }
@@ -132,6 +203,7 @@ def handle_tool_call(assistant_message, conversation):
                 print(f"Code output: {tool_response['output']}")
         else:
             tool_response = {"error": "Missing 'code_str' argument."}
+    
     elif tool_name == 'value_setter':
         # Existing code for value_setter
         new_value = arguments.get('new_value')
@@ -141,6 +213,23 @@ def handle_tool_call(assistant_message, conversation):
         else:
             tool_response = {"error": "Missing 'new_value' argument."}
             print(tool_response["error"])
+    
+    elif tool_name == 'send_email':
+        recipient_email = arguments.get('recipient_email')
+        subject = arguments.get('subject')
+        body = arguments.get('body')
+        if recipient_email and subject and body:
+            try:
+                tool_response = send_email(recipient_email, subject, body)
+                print(f"Tool '{tool_name}' executed: {tool_response}.")
+            except Exception as e:
+                tool_response = {"error": f"Failed to send email. Error: {e}"}
+                print(tool_response["error"])
+        else:
+            missing_fields = [key for key in ['recipient_email', 'subject', 'body'] if not arguments.get(key)]
+            tool_response = {"error": f"Missing argument(s): {', '.join(missing_fields)}"}
+            print(tool_response["error"])
+
     else:
         # Handle unknown tools
         tool_response = {"error": f"Tool '{tool_name}' not found."}
@@ -188,7 +277,7 @@ def main():
             print(f"AI: {assistant_message.content}")
             
             if assistant_message.content is None:
-                assistant_message.content = ""
+                assistant_message.content = " "
             
             conversation.append({
                 "role": "assistant",
@@ -197,6 +286,8 @@ def main():
 
         # Prompt for the next user input
         user_message = input("You: ")
+        if user_message is None:
+            user_message = " "
 
     print("Chat complete.")
 
