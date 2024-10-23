@@ -4,6 +4,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
+from pydantic import BaseModel
+
 
 # Initialize the OpenAI client
 client = OpenAI()
@@ -216,6 +218,17 @@ def handle_tool_call(assistant_message, conversation):
             "content": assistant_followup.content
         })
 
+class ContinueResponse(BaseModel):
+    explanation: str
+    option: int
+
+cont_response_dict = {
+    1:"I responded to a normal request in the conversation, and it is the user's turn to speak.",
+    2:"I just completed a task or thinking process and told the user that, and there is nothing more for me to do right now, so it is their turn to speak.",
+    3:"I am in the middle of a task, but I would like feedback from the user before continuing. (Perhaps I made a mistake and need help, or I want to check something with the user.)",
+    4:"I am in the middle of a task or thinking process, and there are more steps for me to complete before going to the user. (Perhaps it is a multi-step task, or I made a mistake and have ideas for how to correct it.)"
+}
+
 def main():
     conversation = []
 
@@ -248,19 +261,45 @@ def main():
 
             # Ask the assistant if it has more it needs to do before giving control back to the user
             # This is extremely naive error correction and it is not working well so far
-            conversation.append({"role": "system", "content": "Do you want to continue working? (The alternative is to let the user speak before continuing.) Respond with 'yes' or 'no'. Make sure to respond with one of those!!!"})
+
+            # Define the continue question
+            continue_question = """
+            You can choose between the following options:
+
+            1. I responded to a normal request in the conversation, and it is the user's turn to speak.
+
+            2. I just completed a task or thinking process and told the user that, and there is nothing more for me to do right now, so it is their turn to speak.
+
+            3. I am in the middle of a task, but I would like feedback from the user before continuing. (Perhaps I made a mistake and need help, or I want to check something with the user.)
+
+            4. I am in the middle of a task or thinking process, and there are more steps for me to complete before going to the user. (Perhaps it is a multi-step task, or I made a mistake and have ideas for how to correct it.)
+
+            Please brainstorm to figure out your current state, then select the corresponding option number.
+            """
+            
+            # Append the system message
+            conversation.append({"role": "system", "content": continue_question})
 
             # Get the assistant's response
-            assistant_reply = get_assistant_response(conversation)
-            if assistant_reply.content:
-                print(f"Completed? {assistant_reply.content.strip().lower()}")
-
-            # Remove the fake user message
-            conversation.pop()
-
+            assistant_reply = client.beta.chat.completions.parse(
+                model="gpt-4o-mini",
+                messages=conversation,
+                response_format=ContinueResponse,
+            )
+            
             # Check assistant's reply
-            if 'yes' in assistant_reply.content.strip().lower():
-                # Do not append this 'yes' response to conversation
+            explanation = assistant_reply.choices[0].message.parsed.explanation
+            option = assistant_reply.choices[0].message.parsed.option
+
+            print(f"assistant explanation: {explanation}")
+            # print(f"assistant reply: {cont_response_dict[option]}")
+            conversation.append({"role": "assistant", "content": f"{explanation}\n\n{cont_response_dict[option]}"})
+
+            # Remove the system message
+            # conversation.pop()
+
+            if option == 4:
+                # Assistant wants to continue working
                 loop_count += 1
                 print(f"loop_count={loop_count}")
                 continue
