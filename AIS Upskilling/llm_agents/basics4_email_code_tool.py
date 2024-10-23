@@ -12,19 +12,9 @@ client = OpenAI()
 smtp_server = "smtp.gmail.com"
 port = 587  # TLS port (Gmail)
 
-# Initialize the variable 'value' that will be set by the 'value_setter' tool
-value = 0.0  # Starting with a default value
-
-def value_setter(new_value):
-    """Set the variable 'value' to the specified float value."""
-    global value
-    value = new_value
-    return {"value": value}
-
 def execute_code(code_str):
     """
     Executes the provided code string after user approval.
-    The code has access to the variable 'value'.
 
     Parameters:
     - code_str (str): The code to be executed.
@@ -37,13 +27,9 @@ def execute_code(code_str):
     approval = input("\nDo you approve executing this code? (yes/no): ").strip().lower()
     if approval == 'yes':
         try:
-            # Define a namespace with 'value' accessible
-            exec_namespace = {'value': value}
+            exec_namespace = {}
             exec(code_str, {}, exec_namespace)
             print("\nCode executed successfully.")
-            # Update 'value' if it was modified
-            if 'value' in exec_namespace:
-                globals()['value'] = exec_namespace['value']
             # Capture output if any
             output = exec_namespace.get('output', None)
             return {"status": "Code executed successfully.", "output": output}
@@ -98,26 +84,8 @@ tools = [
     {
         "type": "function",
         "function": {
-            "name": "value_setter",
-            "description": "Set the variable 'value' to a specified float value.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "new_value": {
-                        "type": "number",
-                        "description": "The new value to set."
-                    }
-                },
-                "required": ["new_value"],
-                "additionalProperties": False
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "execute_code",
-            "description": "Executes Python code that can access and modify 'value'. Returns the value of 'output' after the code executes. Always put whatever info you want to persist in the variable 'output'.",
+            "description": "Executes Python code. Returns the value of 'output' after the code executes. Always put whatever info you want to persist in the variable 'output'.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -204,16 +172,6 @@ def handle_tool_call(assistant_message, conversation):
         else:
             tool_response = {"error": "Missing 'code_str' argument."}
     
-    elif tool_name == 'value_setter':
-        # Existing code for value_setter
-        new_value = arguments.get('new_value')
-        if new_value is not None:
-            tool_response = value_setter(new_value)
-            print(f"Tool '{tool_name}' executed: value set to {tool_response['value']}")
-        else:
-            tool_response = {"error": "Missing 'new_value' argument."}
-            print(tool_response["error"])
-    
     elif tool_name == 'send_email':
         recipient_email = arguments.get('recipient_email')
         subject = arguments.get('subject')
@@ -252,10 +210,11 @@ def handle_tool_call(assistant_message, conversation):
     print(f"AI: {assistant_followup.content}")
     
     # Append the assistant's follow-up response to the conversation
-    conversation.append({
-        "role": "assistant",
-        "content": assistant_followup.content
-    })
+    if assistant_followup.content:
+        conversation.append({
+            "role": "assistant",
+            "content": assistant_followup.content
+        })
 
 def main():
     conversation = []
@@ -264,7 +223,8 @@ def main():
     user_message = input("You: ")
     while user_message.lower() != 'end':
         # Add the user's message to the conversation
-        conversation.append({"role": "user", "content": user_message})
+        if user_message:
+            conversation.append({"role": "user", "content": user_message})
 
         # Get assistant's response
         assistant_message = get_assistant_response(conversation)
@@ -276,18 +236,14 @@ def main():
             # No tool call, just print the assistant's message
             print(f"AI: {assistant_message.content}")
             
-            if assistant_message.content is None:
-                assistant_message.content = " "
-            
-            conversation.append({
-                "role": "assistant",
-                "content": assistant_message.content
-            })
+            if assistant_message.content:
+                conversation.append({
+                    "role": "assistant",
+                    "content": assistant_message.content
+                })
 
         # Prompt for the next user input
         user_message = input("You: ")
-        if user_message is None:
-            user_message = " "
 
     print("Chat complete.")
 

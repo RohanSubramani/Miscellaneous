@@ -1,5 +1,3 @@
-# This one would be simpler without the execute code tool. For getting the basic idea of tool use with an argument, you can focus on just value_setter.
-
 from openai import OpenAI
 import json
 
@@ -14,39 +12,6 @@ def value_setter(new_value):
     global value
     value = new_value
     return {"value": value}
-
-def execute_code(code_str):
-    """
-    Executes the provided code string after user approval.
-    The code has access to the variable 'value'.
-
-    Parameters:
-    - code_str (str): The code to be executed.
-
-    Returns:
-    - dict: Contains 'status' and optionally 'output' if execution was successful.
-    """
-    print("The following code is requested to be executed:\n")
-    print(code_str)
-    approval = input("\nDo you approve executing this code? (yes/no): ").strip().lower()
-    if approval == 'yes':
-        try:
-            # Define a namespace with 'value' accessible
-            exec_namespace = {'value': value}
-            exec(code_str, {}, exec_namespace)
-            print("\nCode executed successfully.")
-            # Update 'value' if it was modified
-            if 'value' in exec_namespace:
-                globals()['value'] = exec_namespace['value']
-            # Capture output if any
-            output = exec_namespace.get('output', None)
-            return {"status": "Code executed successfully.", "output": output}
-        except Exception as e:
-            print(f"\nAn error occurred during code execution: {e}")
-            return {"status": "Error during code execution.", "error": str(e)}
-    else:
-        print("\nCode execution aborted by the user.")
-        return {"status": "Execution aborted by user."}
 
 # Define the tools (functions) available for the assistant
 tools = [
@@ -64,24 +29,6 @@ tools = [
                     }
                 },
                 "required": ["new_value"],
-                "additionalProperties": False
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "execute_code",
-            "description": "Executes Python code that can access and modify 'value'. Returns the value of 'output' after the code executes. Always put whatever info you want to persist in the variable 'output'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "code_str": {
-                        "type": "string",
-                        "description": "The Python code to execute."
-                    }
-                },
-                "required": ["code_str"],
                 "additionalProperties": False
             }
         }
@@ -122,17 +69,7 @@ def handle_tool_call(assistant_message, conversation):
     })
     
     # Execute the tool based on the tool name
-    if tool_name == 'execute_code':
-        code_str = arguments.get('code_str')
-        if code_str:
-            # Execute the code and get the result
-            tool_response = execute_code(code_str)
-            # Optionally, print the output
-            if 'output' in tool_response and tool_response['output'] is not None:
-                print(f"Code output: {tool_response['output']}")
-        else:
-            tool_response = {"error": "Missing 'code_str' argument."}
-    elif tool_name == 'value_setter':
+    if tool_name == 'value_setter':
         # Existing code for value_setter
         new_value = arguments.get('new_value')
         if new_value is not None:
