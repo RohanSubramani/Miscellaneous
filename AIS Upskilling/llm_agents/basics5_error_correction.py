@@ -10,6 +10,8 @@ from pydantic import BaseModel
 # Initialize the OpenAI client
 client = OpenAI()
 
+global_model = "gpt-4o"
+
 # 1. Set up the SMTP server and credentials
 smtp_server = "smtp.gmail.com"
 port = 587  # TLS port (Gmail)
@@ -87,13 +89,13 @@ tools = [
         "type": "function",
         "function": {
             "name": "execute_code",
-            "description": "Executes Python code. Returns the value of the variable named 'output' after the code executes. ALWAYS PUT WHATEVER INFO YOU WANT TO PERSIST OR OBSERVE IN THE VARIABLE 'output'! No other variable name works. Also, avoid using new line characters and comments, as they do not work here.",
+            "description": "Executes Python code. Returns the value of the variable named 'output' after the code executes. ALWAYS PUT WHATEVER INFO YOU WANT TO PERSIST OR OBSERVE IN THE VARIABLE 'output'! No other variable name works. Also, AVOID USING COMMENTS, AS THEY DO NOT WORK HERE.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "code_str": {
                         "type": "string",
-                        "description": "Python code to execute that (VERY IMPORTANTLY) must store its result in the variable 'output'."
+                        "description": "Python code to execute that (VERY IMPORTANTLY) must store its result in the variable 'output' and (VERY IMPORTANTLY) cannot have any comments."
                     }
                 },
                 "required": ["code_str"],
@@ -132,7 +134,7 @@ tools = [
 def get_assistant_response(conversation):
     """Get the assistant's response from the OpenAI API."""
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=global_model,
         messages=conversation,
         tools=tools,
     )
@@ -205,32 +207,44 @@ def handle_tool_call(assistant_message, conversation):
     # Append the tool response to the conversation
     conversation.append(tool_call_result_message)
     
-    # Send the result back to the assistant by making another API call
-    assistant_followup = get_assistant_response(conversation)
+    # Give the user a chance to interrupt
+    user_message = input("You (enter nothing to not interrupt): ")
+    if user_message:
+        conversation.append({"role": "user", "content": user_message})
     
-    # Print the assistant's follow-up response
-    print(f"AI: {assistant_followup.content}")
-    
-    # Append the assistant's follow-up response to the conversation
-    if assistant_followup.content:
-        conversation.append({
-            "role": "assistant",
-            "content": assistant_followup.content
-        })
-
 class ContinueResponse(BaseModel):
     explanation: str
     option: int
 
 cont_response_dict = {
-    1:"I responded to a normal request in the conversation, and it is the user's turn to speak.",
-    2:"I just completed a task or thinking process and told the user that, and there is nothing more for me to do right now, so it is their turn to speak.",
-    3:"I am in the middle of a task, but I would like feedback from the user before continuing. (Perhaps I made a mistake and need help, or I want to check something with the user.)",
-    4:"I am in the middle of a task or thinking process, and there are more steps for me to complete before going to the user. (Perhaps it is a multi-step task, or I made a mistake and have ideas for how to correct it.)"
+    1: "I responded to a normal user message in a conversation (with no task involved), and it is the user's turn to speak.",
+    2: "I just completed a task or thinking process and told the user that, and there is nothing more for me to do right now, so it is their turn to speak.",
+    3: "I am in the middle of a task or thinking process, and there are more steps for me to complete before going to the user. Things are going well.",
+    4: "I am in the middle of a task, and I made a small mistake. I will try to correct it now.",
+    5: "I am in the middle of a task, and I just asked the user for help.",
+    6: "I am in the middle of a task, and I just asked the user for clarification.",
+    7: "I am in the middle of a task, and I'm fundamentally stuck but I don't want to ask the user for help right now. I need to reevaluate the core details of the problem I'm trying to solve, the things I've tried so far, how they've failed, and what I've learned from those failures. I WILL NOT CALL ANY TOOLS IN MY NEXT STEP, but instead zoom out and reassess my high-level approach to this task."
 }
 
+continue_options = [3,4,7] # These are the options where the assistant should continue thinking without user input
+
+def generate_continue_question(response_dict):
+    # Start with the prompt
+    question = "You can choose between the following options:\n\n"
+    
+    # Loop through the dictionary to add each option
+    for key, value in response_dict.items():
+        question += f"{key}. {value}\n\n"
+
+    # Add the final instruction
+    question += "Please brainstorm to figure out your current state, then select the corresponding option number."
+    
+    return question
+
+continue_question = generate_continue_question(cont_response_dict)
+
 def main():
-    conversation = []
+    conversation = [{"role": "system", "content": "You are a task execution and problem solving AI assistant. You are highly experienced at intelligently tackling hard problems, using tools when (and only when) it is appropriate, thinking carefully about how to correct your own errors, and asking for help when you need it. You never make up solutions. If you need to spend a long time thinking to solve a problem, you do it, rather than rushing it and providing a half-baked or made-up answer."}]
 
     # User interaction loop
     user_message = input("You: ")
@@ -259,30 +273,14 @@ def main():
                         "content": assistant_message.content
                     })
 
-            # Ask the assistant if it has more it needs to do before giving control back to the user
-            # This is extremely naive error correction and it is not working well so far
-
-            # Define the continue question
-            continue_question = """
-            You can choose between the following options:
-
-            1. I responded to a normal request in the conversation, and it is the user's turn to speak.
-
-            2. I just completed a task or thinking process and told the user that, and there is nothing more for me to do right now, so it is their turn to speak.
-
-            3. I am in the middle of a task, but I would like feedback from the user before continuing. (Perhaps I made a mistake and need help, or I want to check something with the user.)
-
-            4. I am in the middle of a task or thinking process, and there are more steps for me to complete before going to the user. (Perhaps it is a multi-step task, or I made a mistake and have ideas for how to correct it.)
-
-            Please brainstorm to figure out your current state, then select the corresponding option number.
-            """
+            # Ask the assistant its current status
             
             # Append the system message
             conversation.append({"role": "system", "content": continue_question})
 
             # Get the assistant's response
             assistant_reply = client.beta.chat.completions.parse(
-                model="gpt-4o-mini",
+                model=global_model,
                 messages=conversation,
                 response_format=ContinueResponse,
             )
@@ -292,13 +290,17 @@ def main():
             option = assistant_reply.choices[0].message.parsed.option
 
             print(f"assistant explanation: {explanation}")
-            # print(f"assistant reply: {cont_response_dict[option]}")
+            print(f"assistant reply: {option} - {cont_response_dict[option]}")
             conversation.append({"role": "assistant", "content": f"{explanation}\n\n{cont_response_dict[option]}"})
+
+            with open("transcript.txt", "w", encoding="utf-8") as file:
+                for message in conversation:
+                    file.write(f"{message['role']}: {message['content']}\n")
 
             # Remove the system message
             # conversation.pop()
 
-            if option == 4:
+            if option in continue_options:
                 # Assistant wants to continue working
                 loop_count += 1
                 print(f"loop_count={loop_count}")
