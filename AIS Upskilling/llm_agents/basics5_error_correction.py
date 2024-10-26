@@ -5,12 +5,25 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
 from pydantic import BaseModel
+import tiktoken
+
 
 
 # Initialize the OpenAI client
 client = OpenAI()
 
-global_model = "gpt-4o"
+global_model = "gpt-4o-mini"
+encoding = tiktoken.encoding_for_model(global_model)
+
+def count_tokens(conversation):
+    """Count the number of tokens in the conversation."""
+    token_count = 0
+    for message in conversation:
+        token_count += len(encoding.encode(message['content']))
+    return token_count
+
+TOKEN_LIMIT= 4096 # I think
+THRESHOLD = 0.8
 
 # 1. Set up the SMTP server and credentials
 smtp_server = "smtp.gmail.com"
@@ -32,10 +45,10 @@ def execute_code(code_str):
     if approval == 'yes':
         try:
             exec_namespace = {}
-            exec(code_str, {}, exec_namespace)
+            exec(code_str, exec_namespace, exec_namespace)
             print("\nCode executed successfully.")
             # Capture output if any
-            output = exec_namespace.get('output', "'output' was not assigned a value")
+            output = str(exec_namespace.get('output', "'output' was not assigned a value"))
             return {"status": "Code executed successfully.", "output": output}
         except Exception as e:
             print(f"\nAn error occurred during code execution: {e}")
@@ -223,7 +236,8 @@ cont_response_dict = {
     4: "I am in the middle of a task, and I made a small mistake. I will try to correct it now.",
     5: "I am in the middle of a task, and I just asked the user for help.",
     6: "I am in the middle of a task, and I just asked the user for clarification.",
-    7: "I am in the middle of a task, and I'm fundamentally stuck but I don't want to ask the user for help right now. I need to reevaluate the core details of the problem I'm trying to solve, the things I've tried so far, how they've failed, and what I've learned from those failures. I WILL NOT CALL ANY TOOLS IN MY NEXT STEP, but instead zoom out and reassess my high-level approach to this task."
+    7: "I am in the middle of a task, and I'm fundamentally stuck but I don't want to ask the user for help right now. I need to reevaluate the core details of the problem I'm trying to solve, the things I've tried so far, how they've failed, and what I've learned from those failures. I WILL NOT CALL ANY TOOLS IN MY NEXT STEP, but instead zoom out and reassess my high-level approach to this task.",
+    8: "I have been fundamentally stuck for a while. I should stop bashing my head against this problem and ask the user for help or clarification."
 }
 
 continue_options = [3,4,7] # These are the options where the assistant should continue thinking without user input
@@ -243,6 +257,57 @@ def generate_continue_question(response_dict):
 
 continue_question = generate_continue_question(cont_response_dict)
 
+def summarize_conversation(conversation):
+    """Summarize the first 75% of the conversation when nearing the token limit."""
+    # Calculate the index to split the conversation at 75%
+    split_index = int(len(conversation) * 0.75)
+    
+    # Ensure the first non-summarized message does not have the role 'tool'
+    while split_index < len(conversation) and conversation[split_index]["role"] == "tool":
+        split_index += 1
+    
+    print(f"split_index={split_index}")
+    
+    conversation_to_summarize = conversation[:split_index]
+    recent_conversation = conversation[split_index:]
+
+    # Define the summarization prompt
+    summary_prompt = "Summarize the preceding conversation in a concise manner, while maintaining ALL details that are likely to be needed going forward."
+
+    # Prepare the messages for the summarization request
+    summarization_messages = [
+        *conversation_to_summarize,
+        {"role": "system", "content": summary_prompt}
+    ]
+
+    # Get the summary using OpenAI's chat completion API
+    summary_response = client.chat.completions.create(
+        model=global_model,
+        messages=summarization_messages
+    )
+
+    # Get the summary content from the response
+    summary = summary_response.choices[0].message.content
+    print("Summary of the previous conversation: " + summary)
+
+    # Create a new conversation with the summary and recent messages
+    summarized_conversation = [
+        {"role": "system", "content": "Summary of the previous conversation: " + summary},
+        *recent_conversation
+    ]
+
+    return summarized_conversation
+
+def maybe_summarize(conversation):
+    token_count = count_tokens(conversation)
+
+    if token_count >= TOKEN_LIMIT * THRESHOLD:
+        print(f"Token count = {token_count}, TOKEN_LIMIT * THRESHOLD = {TOKEN_LIMIT * THRESHOLD}")
+        print("Token limit approaching, summarizing conversation...")
+        conversation = summarize_conversation(conversation)
+    
+    return conversation
+
 def main():
     conversation = [{"role": "system", "content": "You are a task execution and problem solving AI assistant. You are highly experienced at intelligently tackling hard problems, using tools when (and only when) it is appropriate, thinking carefully about how to correct your own errors, and asking for help when you need it. You never make up solutions. If you need to spend a long time thinking to solve a problem, you do it, rather than rushing it and providing a half-baked or made-up answer."}]
 
@@ -257,6 +322,7 @@ def main():
         loop_count = 0
         while not assistant_done and loop_count<10:
             # Get assistant's response
+            conversation = maybe_summarize(conversation)
             assistant_message = get_assistant_response(conversation)
 
             if assistant_message.tool_calls:
@@ -279,6 +345,7 @@ def main():
             conversation.append({"role": "system", "content": continue_question})
 
             # Get the assistant's response
+            conversation = maybe_summarize(conversation)
             assistant_reply = client.beta.chat.completions.parse(
                 model=global_model,
                 messages=conversation,
@@ -294,8 +361,7 @@ def main():
             conversation.append({"role": "assistant", "content": f"{explanation}\n\n{cont_response_dict[option]}"})
 
             with open("transcript.txt", "w", encoding="utf-8") as file:
-                for message in conversation:
-                    file.write(f"{message['role']}: {message['content']}\n")
+                json.dump(conversation, file, ensure_ascii=False, indent=4)
 
             # Remove the system message
             # conversation.pop()
@@ -308,7 +374,7 @@ def main():
             else:
                 # Assistant is done
                 assistant_done = True
-
+            
         # Prompt for the next user input
         user_message = input("You: ")
 
