@@ -8,6 +8,9 @@ import time
 client = OpenAI()
 
 global_model = "gpt-4o-mini"
+if global_model != "gpt-4o-mini":
+    print(f"This might be expensive; model is {global_model}. Waiting 5 seconds for you to consider cancelling.")
+    time.sleep(5)
 encoding = tiktoken.encoding_for_model(global_model)
 
 def count_tokens(conversation):
@@ -366,6 +369,28 @@ def maybe_summarize(conversation):
 
     return conversation
 
+# cont_response_dict = {
+#     1: "Things are going well. I'll keep doing what I'm doing.",
+#     2: "I made a small mistake. I will try to correct it now.",
+#     3: "I'm fundamentally stuck. I need to reflect on everything important I remember about the problem I'm trying to solve, the things I've tried so far, how they've failed, and what I've learned from those failures. I WILL NOT CALL ANY TOOLS IN MY NEXT STEP, but instead zoom out and reassess my high-level approach to this task. AGAIN, I WILL NOT CALL ANY TOOLS IN MY NEXT STEP.",
+#     8: "I have been fundamentally stuck for a while. I should stop bashing my head against this problem and ask the user for help or clarification."
+# }
+
+# continue_options = [3,4,7] # These are the options where the assistant should continue thinking without user input
+
+# def generate_continue_question(response_dict):
+#     # Start with the prompt
+#     question = "You can choose between the following options:\n\n"
+    
+#     # Loop through the dictionary to add each option
+#     for key, value in response_dict.items():
+#         question += f"{key}. {value}\n\n"
+
+#     # Add the final instruction
+#     question += "Please brainstorm to figure out your current state, then select the corresponding option number."
+    
+#     return question
+
 def main():
     conversation = [
         {
@@ -400,11 +425,8 @@ def main():
                     assistant_done = True
                     break
             else:
-                # No tool call, just print the assistant's message
-                if assistant_message.content is None:
-                    assistant_message.content = "(Silent)"
-                print(f"AI: {assistant_message.content}")
                 if assistant_message.content:
+                    print(f"AI: {assistant_message.content}")
                     conversation.append({
                         "role": "assistant",
                         "content": assistant_message.content

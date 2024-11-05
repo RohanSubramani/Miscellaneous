@@ -356,6 +356,9 @@ def main():
             explanation = assistant_reply.choices[0].message.parsed.explanation
             option = assistant_reply.choices[0].message.parsed.option
 
+            # Remove the system message
+            conversation.pop()
+
             print(f"assistant explanation: {explanation}")
             print(f"assistant reply: {option} - {cont_response_dict[option]}")
             conversation.append({"role": "assistant", "content": f"{explanation}\n\n{cont_response_dict[option]}"})
@@ -363,8 +366,6 @@ def main():
             with open("transcript.txt", "w", encoding="utf-8") as file:
                 json.dump(conversation, file, ensure_ascii=False, indent=4)
 
-            # Remove the system message
-            # conversation.pop()
 
             if option in continue_options:
                 # Assistant wants to continue working
