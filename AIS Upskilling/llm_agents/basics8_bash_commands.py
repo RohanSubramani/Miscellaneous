@@ -9,7 +9,7 @@ import shutil
 from pydantic import BaseModel
 
 system = platform.system()
-print(f"System: {system}\n")
+# print(f"System: {system}\n")
 
 # Initialize the OpenAI client
 client = OpenAI()
@@ -85,9 +85,9 @@ def maybe_summarize(conversation):
 
     return conversation
 
-# Print the shell that will be used
-shell_path = os.getenv('SHELL', '/bin/bash')  # Default to /bin/bash if SHELL is not set
-print(f"Using shell: {shell_path}")
+# # Print the shell that will be used
+# shell_path = os.getenv('SHELL', '/bin/bash')  # Default to /bin/bash if SHELL is not set
+# print(f"Using shell: {shell_path}")
 
 # Define the Bash command execution tool
 def execute_bash_command(command):
@@ -98,7 +98,8 @@ def execute_bash_command(command):
     - command (str): The Bash command to execute.
 
     Returns:
-    - dict: Contains 'status' and optionally 'output' if execution was successful.
+    - dict: Contains 'status' and optionally 'output' if execution was successful,
+            or 'suggestion' if the user provides one upon aborting.
     """
     print("The following Bash command is requested to be executed:\n")
     print(command)
@@ -107,7 +108,6 @@ def execute_bash_command(command):
     if approval == 'yes':
         try:
             system = platform.system()
-            print(f"System: {system}")
             
             if system == 'Windows':
                 # Attempt to locate 'bash' in the system PATH
@@ -163,7 +163,16 @@ def execute_bash_command(command):
     
     else:
         print("\nCommand execution aborted by the user.")
-        return {"status": "Execution aborted by user."}
+        suggestion = input("If you have a suggestion, please enter it now (or press Enter to skip): ").strip()
+        
+        if suggestion:
+            print("Thank you for your suggestion!")
+            return {
+                "status": "Execution aborted by user.",
+                "suggestion": suggestion
+            }
+        else:
+            return {"status": "Execution aborted by user."}
 
 # Define the tools (functions) available for the assistant
 tools = [
