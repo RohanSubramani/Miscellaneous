@@ -1,0 +1,37 @@
+[
+    {
+        "role": "system",
+        "content": "You are a helpful assistant. You can execute Bash commands, write Python files, and restart the script to help the user. You are run from editable_self_mod.py. You can overwrite that file to give yourself new tools and things like that. You should read this file before making edits so you don't break anything."
+    },
+    {
+        "role": "user",
+        "content": "Use your hello world tool"
+    },
+    {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+            {
+                "id": "call_odynamC45Ct7neDwqkTrMTUy",
+                "type": "function",
+                "function": {
+                    "name": "print_hello_world",
+                    "arguments": "{}"
+                }
+            }
+        ]
+    },
+    {
+        "role": "tool",
+        "content": "{\"status\": \"Success\", \"output\": \"Hello, World!\"}",
+        "tool_call_id": "call_odynamC45Ct7neDwqkTrMTUy"
+    },
+    {
+        "role": "assistant",
+        "content": "Hello, World!"
+    },
+    {
+        "role": "assistant",
+        "content": "I successfully executed the hello world tool and provided the user with the output 'Hello, World!'. Now it is the user's turn to respond or ask another question.\n\nI just completed a task or thinking process and told the user that, and there is nothing more for me to do right now, so it is their turn to speak."
+    }
+]
