@@ -6,7 +6,7 @@ import tiktoken
 import time
 import platform
 import shutil
-import sys  # Added to access sys.argv and sys.executable
+import sys  # Already imported to access sys.argv and sys.executable
 from pydantic import BaseModel
 
 system = platform.system()
@@ -232,7 +232,7 @@ def end_and_rerun():
     approval = input("Do you approve restarting the script? (yes/no): ").strip().lower()
     if approval == 'yes':
         # print("Restarting the script...")
-        return {"status": "Restart approved", "assistant responsibility":"Assistant should now say that the file is about to restart."}
+        return {"status": "Restart approved", "assistant responsibility": "Assistant should now say that the file is about to restart."}
     else:
         print("Restart aborted by the user.")
         suggestion = input("If you have a suggestion, please enter it now (or press Enter to skip): ").strip()
@@ -345,7 +345,7 @@ def get_assistant_response(conversation):
     )
     return response.choices[0].message
 
-def handle_tool_call(assistant_message, conversation):
+def handle_tool_call(assistant_message, conversation, transcript_filename):
     """Handle the tool call requested by the assistant."""
     # Extract the tool call details
     tool_call = assistant_message.tool_calls[0]
@@ -415,10 +415,6 @@ def handle_tool_call(assistant_message, conversation):
     # Append the tool response to the conversation
     conversation.append(tool_call_result_message)
 
-    # Log the conversation to a transcript file
-    with open("transcript.txt", "w", encoding="utf-8") as file:
-        json.dump(conversation, file, ensure_ascii=False, indent=4)
-
     # If the tool_response indicates restart approved, set a flag
     global restart_approved
     if tool_response.get("status") == "Restart approved":
@@ -439,21 +435,53 @@ def handle_tool_call(assistant_message, conversation):
             "role": "assistant",
             "content": assistant_followup.content
         })
+        
+    # Log the conversation to a transcript file
+    with open(transcript_filename, "w", encoding="utf-8") as file:
+        json.dump(conversation, file, ensure_ascii=False, indent=4)
 
 def main():
+    # Parse command-line argument for restarts
+    if len(sys.argv) > 1:
+        restarts = int(sys.argv[1])
+    else:
+        restarts = 0
+
+    print(f"Restarts: {restarts}")
+
     # Initialize flags
     global restart_approved
     restart_approved = False
     global exit_conversation
     exit_conversation = False
 
-    # Initial system prompt
-    conversation = [
-        {
-            "role": "system",
-            "content": "You are a helpful assistant. You can execute Bash commands, write Python files, and restart the script to help the user. You are run from editable_self_mod.py. You can overwrite that file to give yourself new tools and things like that. You should read this file before making edits so you don't break anything."
-        }
-    ]
+    # Transcript filenames
+    previous_transcript_filename = f"transcripts{restarts - 1}.txt"
+    transcript_filename = f"transcripts{restarts}.txt"
+
+    # Initialize or load conversation
+    if restarts == 0:
+        # Initial system prompt
+        conversation = [
+            {
+                "role": "system",
+                "content": "You are a helpful assistant. You can execute Bash commands, write Python files, and restart the script to help the user. You are run from editable_self_mod.py. You can overwrite that file to give yourself new tools and things like that. You should read this file before making edits so you don't break anything."
+            }
+        ]
+    else:
+        # Load conversation from previous transcript
+        try:
+            with open(previous_transcript_filename, "r", encoding="utf-8") as file:
+                conversation = json.load(file)
+            print(f"Loaded conversation from {previous_transcript_filename}")
+        except FileNotFoundError:
+            print(f"Transcript file {previous_transcript_filename} not found. Starting new conversation.")
+            conversation = [
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant. You can execute Bash commands, write Python files, and restart the script to help the user. You are run from editable_self_mod.py. You can overwrite that file to give yourself new tools and things like that. You should read this file before making edits so you don't break anything."
+                }
+            ]
 
     print("Chat with the assistant. Type 'end' to finish.")
     user_message = input("You: ")
@@ -472,7 +500,7 @@ def main():
 
             if assistant_message.tool_calls:
                 # Handle tool calls
-                handle_tool_call(assistant_message, conversation)
+                handle_tool_call(assistant_message, conversation, transcript_filename)
             else:
                 # No tool call, just print the assistant's message
                 if assistant_message.content:
@@ -505,7 +533,7 @@ def main():
             conversation.append({"role": "assistant", "content": f"{explanation}\n\n{cont_response_dict[option]}"})
 
             # Log the conversation to a transcript file
-            with open("transcript.txt", "w", encoding="utf-8") as file:
+            with open(transcript_filename, "w", encoding="utf-8") as file:
                 json.dump(conversation, file, ensure_ascii=False, indent=4)
 
         # Prompt for the next user input if not exiting
@@ -524,13 +552,14 @@ def main():
     if restart_approved:
         print()
         script_path = os.path.abspath(__file__)
-        command = f'python "{script_path}"'
+        next_restarts = restarts + 1
+        command = f'python "{script_path}" {next_restarts}'
         if system == 'Windows':
             # For Windows, use the command prompt
             os.system(command)
         else:
             # For Unix/Linux, use bash
-            subprocess.run(['bash', '-c', command])
+            subprocess.run(['python', script_path, str(next_restarts)])
 
 if __name__ == "__main__":
     main()
