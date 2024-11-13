@@ -32,8 +32,8 @@ def count_tokens(conversation):
     return token_count
 
 # Token Management
-TOKEN_LIMIT = 4096  # Adjust based on the model's token limit
-THRESHOLD = 0.8
+TOKEN_LIMIT = 128000  # Adjust based on the model's token limit
+THRESHOLD = 0.9
 
 def summarize_conversation(conversation):
     """Summarize the first 75% of the conversation when nearing the token limit."""
@@ -231,8 +231,8 @@ def end_and_rerun():
     print("The assistant has requested to end the conversation and rerun the script.")
     approval = input("Do you approve restarting the script? (yes/no): ").strip().lower()
     if approval == 'yes':
-        print("Restarting the script...")
-        return {"status": "Restart approved"}
+        # print("Restarting the script...")
+        return {"status": "Restart approved", "assistant responsibility":"Assistant should now say that the file is about to restart."}
     else:
         print("Restart aborted by the user.")
         suggestion = input("If you have a suggestion, please enter it now (or press Enter to skip): ").strip()
@@ -353,7 +353,7 @@ def handle_tool_call(assistant_message, conversation):
     # Parse the arguments
     arguments = json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
 
-    print(f"\nTool called: {tool_name}\nArguments: {arguments}\n")
+    # print(f"\nTool called: {tool_name}\nArguments: {arguments}\n")
 
     # Append the assistant's message (with tool_call) to the conversation
     conversation.append({
@@ -400,9 +400,6 @@ def handle_tool_call(assistant_message, conversation):
     elif tool_name == 'end_and_rerun':
         # Execute the function and get the result
         tool_response = end_and_rerun()
-        # Optionally, print the output
-        if 'status' in tool_response and tool_response['status']:
-            print(f"Status: {tool_response['status']}")
     else:
         # Handle unknown tools
         tool_response = {"error": f"Tool '{tool_name}' not found."}
@@ -454,7 +451,7 @@ def main():
     conversation = [
         {
             "role": "system",
-            "content": "You are a helpful assistant. You can execute Bash commands, write Python files, and restart the script to help the user."
+            "content": "You are a helpful assistant. You can execute Bash commands, write Python files, and restart the script to help the user. You are run from editable_self_mod.py. You can overwrite that file to give yourself new tools and things like that. You should read this file before making edits so you don't break anything."
         }
     ]
 
@@ -466,7 +463,7 @@ def main():
             conversation.append({"role": "user", "content": user_message})
 
         option = continue_options[0]  # Always enter the while loop the first time
-        while option in continue_options:
+        while option in continue_options and not exit_conversation:
             # Get the assistant's response
             conversation = maybe_summarize(conversation)
 
@@ -484,6 +481,9 @@ def main():
                         "role": "assistant",
                         "content": assistant_message.content
                     })
+
+            if exit_conversation:
+                break  # Exit the inner loop immediately
 
             conversation.append({"role": "system", "content": continue_question})
 
@@ -511,16 +511,19 @@ def main():
         # Prompt for the next user input if not exiting
         if not exit_conversation:
             user_message = input("You: ")
+        else:
+            break
 
         if option in termination_options:
             break
 
-    print("Chat complete.")
+    if not restart_approved:
+        print("Chat complete.")
 
     # If restart is approved, rerun the script
     if restart_approved:
+        print()
         script_path = os.path.abspath(__file__)
-        print(f"Re-running the script using bash command.")
         command = f'python "{script_path}"'
         if system == 'Windows':
             # For Windows, use the command prompt
@@ -531,4 +534,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    print("\nFile complete.\n")
