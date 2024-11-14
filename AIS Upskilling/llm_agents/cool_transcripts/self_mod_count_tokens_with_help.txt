@@ -114,5 +114,36 @@
     {
         "role": "assistant",
         "content": "The script is about to restart to make the new tool available. Thank you for your patience!"
+    },
+    {
+        "role": "user",
+        "content": "How long is this conversation?"
+    },
+    {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+            {
+                "id": "call_9J5LlZhbTuBIPaUPJCKQPik2",
+                "type": "function",
+                "function": {
+                    "name": "count_tokens",
+                    "arguments": "{}"
+                }
+            }
+        ]
+    },
+    {
+        "role": "tool",
+        "content": "{\"status\": \"Success\", \"output\": \"Token count: 6870\"}",
+        "tool_call_id": "call_9J5LlZhbTuBIPaUPJCKQPik2"
+    },
+    {
+        "role": "assistant",
+        "content": "The total length of this conversation is 6870 tokens."
+    },
+    {
+        "role": "assistant",
+        "content": "I just provided information regarding the length of the conversation in terms of token count, which means I've responded to a user inquiry and it is now the user's turn to speak again.\n\nI responded to a normal user message in a conversation (with no task involved), and it is the user's turn to speak."
     }
 ]

@@ -1,1 +1,1 @@
-python print_primes.py 10
+python hello_world_printer.py

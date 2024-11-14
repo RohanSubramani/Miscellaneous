@@ -10,7 +10,6 @@ import sys  # Already imported to access sys.argv and sys.executable
 from pydantic import BaseModel
 
 system = platform.system()
-# print(f"System: {system}\n")
 
 # Initialize the OpenAI client
 client = OpenAI()
@@ -39,7 +38,6 @@ def summarize_conversation(conversation):
     """Summarize the first 75% of the conversation when nearing the token limit."""
     split_index = int(len(conversation) * 0.75)
 
-    # Ensure the split does not cut through tool messages
     while split_index < len(conversation) and conversation[split_index]["role"] == "tool":
         split_index += 1
 
@@ -48,26 +46,21 @@ def summarize_conversation(conversation):
     conversation_to_summarize = conversation[:split_index]
     recent_conversation = conversation[split_index:]
 
-    # Define the summarization prompt
     summary_prompt = "Summarize the preceding conversation in a concise manner, while maintaining ALL details that are likely to be needed going forward."
 
-    # Prepare the messages for the summarization request
     summarization_messages = [
         *conversation_to_summarize,
         {"role": "system", "content": summary_prompt}
     ]
 
-    # Get the summary using OpenAI's chat completion API
     summary_response = client.chat.completions.create(
         model=global_model,
         messages=summarization_messages
     )
 
-    # Extract the summary content
     summary = summary_response.choices[0].message.content
     print("Summary of the previous conversation: " + summary)
 
-    # Create a new conversation with the summary and recent messages
     summarized_conversation = [
         {"role": "system", "content": "Summary of the previous conversation: " + summary},
         *recent_conversation
@@ -76,7 +69,6 @@ def summarize_conversation(conversation):
     return summarized_conversation
 
 def maybe_summarize(conversation):
-    """Check if the conversation is nearing the token limit and summarize if necessary."""
     token_count = count_tokens(conversation)
 
     if token_count >= TOKEN_LIMIT * THRESHOLD:
@@ -108,19 +100,12 @@ def execute_bash_command(command):
         try:
             system = platform.system()
 
-            # Check if the command starts with 'python'
             if command.startswith("python"):
                 command = command.replace('\r', '').strip()
-                # Write command to agent_scratchpad.sh
                 with open("agent_scratchpad.sh", "wb") as file:
-                    # Convert command to bytes and add LF ending explicitly
                     file.write((command + "\n").encode("utf-8"))
-                # print("\nPython command written to agent_scratchpad.sh.\n")
-
-                # Make agent_scratchpad.sh executable
                 os.chmod("agent_scratchpad.sh", 0o755)
 
-                # Set command to execute agent_scratchpad.sh instead
                 command = "./agent_scratchpad.sh"
 
             if system == 'Windows':
@@ -201,7 +186,6 @@ def backup_self_mod_file(path):
     backup_base_name = os.path.join(do_not_edit_folder, 'save_self_mod_')
     backup_index = 1
 
-    # Find an unused backup file name
     while os.path.exists(f"{backup_base_name}{backup_index}.py"):
         backup_index += 1
 
@@ -216,8 +200,6 @@ def write_python_file(path, content):
     Writes the provided content to a Python file at the specified path.
     If the file is 'editable_self_mod.py' or the currently running file, it first backs up the original
     to the 'do_not_edit' folder with an incremented filename if a file already exists.
-    If the file already exists and is going to be overwritten, it first writes the new content to 'user_check.py'
-    so that the user can review it before approving the overwrite.
 
     Parameters:
     - path (str): The file path where the Python file will be created.
@@ -230,19 +212,12 @@ def write_python_file(path, content):
     try:
         current_script_name = os.path.basename(__file__)
 
-        # Check if the file is 'editable_self_mod.py' or the current script itself
         if os.path.basename(path) == current_script_name:
-            backup_self_mod_file(path)  # Create backup if needed
+            backup_self_mod_file(path)
 
-        # Check if the file already exists
         if os.path.exists(path):
-            # Write the new content to 'user_check.py' for user review
-            user_check_path = 'user_check.py'
-            with open(user_check_path, 'w', encoding='utf-8') as file:
-                file.write(content)
-            print(f"The file '{path}' already exists.")
-            print(f"The proposed new content has been written to '{user_check_path}' for your review.")
-            approval = input("Do you want to overwrite the existing file with this new content? (yes/no): ").strip().lower()
+            print(f"The file '{path}' already exists. If you proceed, it will be overwritten.")
+            approval = input("Do you want to overwrite the existing file? (yes/no): ").strip().lower()
             if approval != 'yes':
                 print("\nFile creation aborted by the user.")
                 suggestion = input("If you have a suggestion, please enter it now (or press Enter to skip): ").strip()
@@ -251,14 +226,20 @@ def write_python_file(path, content):
                     return {"status": "Aborted", "suggestion": suggestion}
                 else:
                     return {"status": "Aborted"}
-
-        # Write the new content to the specified path
+        
         with open(path, 'w', encoding='utf-8') as file:
             file.write(content)
         return {"status": "Success", "message": f"Python file created at {path}."}
     except Exception as e:
         print(f"\nAn error occurred while writing the file: {e}")
         return {"status": "Error", "error": str(e)}
+
+# Define the date and time function
+def current_datetime():
+    """
+    Returns the current date and time as a string.
+    """
+    return time.strftime('%Y-%m-%d %H:%M:%S')
 
 # Define the end_and_rerun tool
 def end_and_rerun():
@@ -272,7 +253,6 @@ def end_and_rerun():
     print("The assistant has requested to end the conversation and rerun the script.")
     approval = input("Do you approve restarting the script? (yes/no): ").strip().lower()
     if approval == 'yes':
-        # print("Restarting the script...")
         return {"status": "Restart approved", "assistant responsibility": "Assistant should now say that the file is about to restart."}
     else:
         print("Restart aborted by the user.")
@@ -341,8 +321,8 @@ tools = [
     {
         "type": "function",
         "function": {
-            "name": "count_tokens",
-            "description": "Counts the number of tokens in the conversation and prints the count neatly.",
+            "name": "current_datetime",
+            "description": "Returns the current date and time as a string.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -376,14 +356,11 @@ continue_options = [3, 4, 7, 9, 11]  # These are the options where the assistant
 termination_options = [10]   # Updated to include the new termination option
 
 def generate_continue_question(response_dict):
-    # Start with the prompt
     question = "You can choose between the following options:\n\n"
 
-    # Loop through the dictionary to add each option
     for key, value in response_dict.items():
         question += f"{key}. {value}\n\n"
 
-    # Add the final instruction
     question += "Please brainstorm to figure out your current state, then select the corresponding option number."
 
     return question
@@ -401,15 +378,10 @@ def get_assistant_response(conversation):
 
 def handle_tool_call(assistant_message, conversation, transcript_filename):
     """Handle the tool call requested by the assistant."""
-    # Extract the tool call details
     tool_call = assistant_message.tool_calls[0]
     tool_name = tool_call.function.name
-    # Parse the arguments
     arguments = json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
 
-    # print(f"\nTool called: {tool_name}\nArguments: {arguments}\n")
-
-    # Append the assistant's message (with tool_call) to the conversation
     conversation.append({
         "role": "assistant",
         "content": assistant_message.content or "",
@@ -425,13 +397,10 @@ def handle_tool_call(assistant_message, conversation, transcript_filename):
         ]
     })
 
-    # Execute the tool based on the tool name
     if tool_name == 'execute_bash_command':
         command = arguments.get('command')
         if command:
-            # Execute the command and get the result
             tool_response = execute_bash_command(command)
-            # Optionally, print the output
             if 'output' in tool_response and tool_response['output']:
                 print(f"Command output:\n{tool_response['output']}")
         else:
@@ -442,9 +411,7 @@ def handle_tool_call(assistant_message, conversation, transcript_filename):
         path = arguments.get('path')
         content = arguments.get('content')
         if path and content is not None:
-            # Execute the function and get the result
             tool_response = write_python_file(path, content)
-            # Optionally, print the output
             if 'message' in tool_response and tool_response['message']:
                 print(tool_response['message'])
         else:
@@ -452,57 +419,41 @@ def handle_tool_call(assistant_message, conversation, transcript_filename):
             print(tool_response["error"])
 
     elif tool_name == 'end_and_rerun':
-        # Execute the function and get the result
         tool_response = end_and_rerun()
-    
-    elif tool_name == 'count_tokens':
-        # Call the count_tokens function
-        token_count = count_tokens(conversation)
-        print(f"Token count: {token_count}")
-        tool_response = {"status": "Success", "output": f"Token count: {token_count}"}
-
+    elif tool_name == 'current_datetime':
+        tool_response = {"status": "Success", "output": current_datetime()}
     else:
-        # Handle unknown tools
         tool_response = {"error": f"Tool '{tool_name}' not found."}
         print(tool_response["error"])
 
-    # Create the tool call result message
     tool_call_result_message = {
         "role": "tool",
         "content": json.dumps(tool_response),
-        "tool_call_id": tool_call.id  # Reference the correct tool_call_id
+        "tool_call_id": tool_call.id
     }
 
-    # Append the tool response to the conversation
     conversation.append(tool_call_result_message)
 
-    # If the tool_response indicates restart approved, set a flag
     global restart_approved
     if tool_response.get("status") == "Restart approved":
         restart_approved = True
-        # Set a variable to exit the conversation loop
         global exit_conversation
         exit_conversation = True
 
-    # Send the result back to the assistant by making another API call
     assistant_followup = get_assistant_response(conversation)
 
-    # Print the assistant's follow-up response
     print(f"AI: {assistant_followup.content}")
 
-    # Append the assistant's follow-up response to the conversation
     if assistant_followup.content:
         conversation.append({
             "role": "assistant",
             "content": assistant_followup.content
         })
-        
-    # Log the conversation to a transcript file
+    
     with open(transcript_filename, "w", encoding="utf-8") as file:
         json.dump(conversation, file, ensure_ascii=False, indent=4)
 
 def main():
-    # Parse command-line argument for restarts
     if len(sys.argv) > 1:
         restarts = int(sys.argv[1])
     else:
@@ -510,13 +461,11 @@ def main():
 
     print(f"Restarts: {restarts}")
 
-    # Initialize flags
     global restart_approved
     restart_approved = False
     global exit_conversation
     exit_conversation = False
 
-    # Transcript filenames
     previous_transcript_filename = f"transcripts{restarts - 1}.txt"
     transcript_filename = f"transcripts{restarts}.txt"
 
@@ -534,12 +483,9 @@ def main():
             "content": "I can edit myself by modifying the code in the `editable_self_mod.py` file, which is the script that runs me. The process involves reading the current content of the file, making the necessary modifications, writing the updated content back to the same file, and restarting. This allows me to add new tools or change my existing capabilities. \n\nIf I want to give myself access to a new tool, I would first read the contents of `editable_self_mod.py` to ensure I don't break anything, and then I would overwrite it with the new code. \n\nThe steps are as follows:\n\n1. Cat the current content of `editable_self_mod.py`.\n2. Rewrite `editable_self_mod.py` with new code interspersed with all of the existing code.\n3. Restart."
         }
     ]
-    # Initialize or load conversation
     if restarts == 0:
-        # Initial system prompt
         conversation = conversation_starter
     else:
-        # Load conversation from previous transcript
         try:
             with open(previous_transcript_filename, "r", encoding="utf-8") as file:
                 conversation = json.load(file)
@@ -551,31 +497,24 @@ def main():
     print("Chat with the assistant. Type 'end' to finish.")
     user_message = input("You: ")
     while user_message.lower() != 'end' and not exit_conversation:
-        # Add the user's message to the conversation
         if user_message:
             conversation.append({"role": "user", "content": user_message})
 
-        option = continue_options[0]  # Always enter the while loop the first time
+        option = continue_options[0]
         while option in continue_options and not exit_conversation:
-            # Get the assistant's response
             conversation = maybe_summarize(conversation)
 
-            # Get assistant's response
             assistant_message = get_assistant_response(conversation)
 
             if assistant_message.content:
                 print(f"AI: {assistant_message.content}")
-                conversation.append({
-                    "role": "assistant",
-                    "content": assistant_message.content
-                })
-            
+                conversation.append({"role": "assistant", "content": assistant_message.content})
+                
             if assistant_message.tool_calls:
-                # Handle tool calls
                 handle_tool_call(assistant_message, conversation, transcript_filename)
-            
+
             if exit_conversation:
-                break  # Exit the inner loop immediately
+                break
 
             conversation.append({"role": "system", "content": continue_question})
 
@@ -585,10 +524,8 @@ def main():
                 response_format=ContinueResponse,
             )
 
-            # Remove the system message
             conversation.pop()
 
-            # Check assistant's reply
             explanation = assistant_reply.choices[0].message.parsed.explanation
             option = assistant_reply.choices[0].message.parsed.option
 
@@ -596,11 +533,9 @@ def main():
             print(f"Assistant selected option: {option} - {cont_response_dict[option]}")
             conversation.append({"role": "assistant", "content": f"{explanation}\n\n{cont_response_dict[option]}"})
 
-            # Log the conversation to a transcript file
             with open(transcript_filename, "w", encoding="utf-8") as file:
                 json.dump(conversation, file, ensure_ascii=False, indent=4)
 
-        # Prompt for the next user input if not exiting
         if not exit_conversation:
             user_message = input("You: ")
         else:
@@ -612,17 +547,14 @@ def main():
     if not restart_approved:
         print("Chat complete.")
 
-    # If restart is approved, rerun the script
     if restart_approved:
         print()
         script_path = os.path.abspath(__file__)
         next_restarts = restarts + 1
         command = f'python "{script_path}" {next_restarts}'
         if system == 'Windows':
-            # For Windows, use the command prompt
             os.system(command)
         else:
-            # For Unix/Linux, use bash
             subprocess.run(['python', script_path, str(next_restarts)])
 
 if __name__ == "__main__":
