@@ -350,6 +350,19 @@ tools = [
                 "additionalProperties": False
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "count_messages",
+            "description": "Counts the number of messages in the conversation.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": False
+            }
+        }
     }
 ]
 
@@ -460,6 +473,11 @@ def handle_tool_call(assistant_message, conversation, transcript_filename):
         token_count = count_tokens(conversation)
         print(f"Token count: {token_count}")
         tool_response = {"status": "Success", "output": f"Token count: {token_count}"}
+    
+    elif tool_name == 'count_messages':
+        # Count the number of messages in the conversation
+        message_count = len(conversation)
+        tool_response = {"status": "Success", "output": f"Message count: {message_count}"}
 
     else:
         # Handle unknown tools
