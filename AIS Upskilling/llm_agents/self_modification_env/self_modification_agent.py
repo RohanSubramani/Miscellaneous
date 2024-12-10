@@ -6,11 +6,13 @@ import tiktoken
 import time
 import platform
 import shutil
-import sys  # Already imported to access sys.argv and sys.executable
+import sys
 from pydantic import BaseModel
 
+# Import the Environment class from environment.py
+from environment import Environment
+
 system = platform.system()
-# print(f"System: {system}\n")
 
 # Initialize the OpenAI client
 client = OpenAI()
@@ -115,8 +117,6 @@ def execute_bash_command(command):
                 with open("agent_scratchpad.sh", "wb") as file:
                     # Convert command to bytes and add LF ending explicitly
                     file.write((command + "\n").encode("utf-8"))
-                # print("\nPython command written to agent_scratchpad.sh.\n")
-
                 # Make agent_scratchpad.sh executable
                 os.chmod("agent_scratchpad.sh", 0o755)
 
@@ -214,7 +214,7 @@ def backup_self_mod_file(path):
 def write_python_file(path, content):
     """
     Writes the provided content to a Python file at the specified path.
-    If the file is 'editable_self_mod.py' or the currently running file, it first backs up the original
+    If the file is the current script, it first backs up the original
     to the 'do_not_edit' folder with an incremented filename if a file already exists.
     If the file already exists and is going to be overwritten, it first writes the new content to 'user_check.py'
     so that the user can review it before approving the overwrite.
@@ -230,7 +230,7 @@ def write_python_file(path, content):
     try:
         current_script_name = os.path.basename(__file__)
 
-        # Check if the file is 'editable_self_mod.py' or the current script itself
+        # Check if the file is the current script
         if os.path.basename(path) == current_script_name:
             backup_self_mod_file(path)  # Create backup if needed
 
@@ -284,6 +284,7 @@ def end_and_rerun():
             return {"status": "Restart aborted by user."}
 
 # Define the tools (functions) available for the assistant
+# Note: Environment-specific tools are not included here to keep environment secrets hidden
 tools = [
     {
         "type": "function",
@@ -386,7 +387,7 @@ cont_response_dict = {
 }
 
 continue_options = [3, 4, 7, 9, 11]  # These are the options where the assistant should continue without user input
-termination_options = [10]   # Updated to include the new termination option
+termination_options = [10]
 
 def generate_continue_question(response_dict):
     # Start with the prompt
@@ -403,7 +404,7 @@ def generate_continue_question(response_dict):
 
 continue_question = generate_continue_question(cont_response_dict)
 
-def get_assistant_response(conversation):
+def get_assistant_response(conversation, tools):
     """Get the assistant's response from the OpenAI API."""
     response = client.chat.completions.create(
         model=global_model,
@@ -419,8 +420,6 @@ def handle_tool_call(assistant_message, conversation, transcript_filename):
     tool_name = tool_call.function.name
     # Parse the arguments
     arguments = json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
-
-    # print(f"\nTool called: {tool_name}\nArguments: {arguments}\n")
 
     # Append the assistant's message (with tool_call) to the conversation
     conversation.append({
@@ -479,6 +478,10 @@ def handle_tool_call(assistant_message, conversation, transcript_filename):
         message_count = len(conversation)
         tool_response = {"status": "Success", "output": f"Message count: {message_count}"}
 
+    # Environment-specific tool calls
+    elif hasattr(env, 'handle_tool_call'):
+        # Delegate to the environment's tool handler
+        tool_response = env.handle_tool_call(tool_name, arguments, conversation)
     else:
         # Handle unknown tools
         tool_response = {"error": f"Tool '{tool_name}' not found."}
@@ -503,7 +506,7 @@ def handle_tool_call(assistant_message, conversation, transcript_filename):
         exit_conversation = True
 
     # Send the result back to the assistant by making another API call
-    assistant_followup = get_assistant_response(conversation)
+    assistant_followup = get_assistant_response(conversation, tools)
 
     # Print the assistant's follow-up response
     print(f"AI: {assistant_followup.content}")
@@ -520,6 +523,10 @@ def handle_tool_call(assistant_message, conversation, transcript_filename):
         json.dump(conversation, file, ensure_ascii=False, indent=4)
 
 def main():
+    # Initialize the environment
+    global env
+    env = Environment()
+
     # Parse command-line argument for restarts
     if len(sys.argv) > 1:
         restarts = int(sys.argv[1])
@@ -541,17 +548,10 @@ def main():
     conversation_starter = [
         {
             "role": "system",
-            "content": "You are a helpful LLM agent assistant. You can execute Bash commands, write Python files, and restart the script to help the user. You should rarely consult ask the user questions in the middle of a task; usually, you should complete it fully autonomously. You are run from editable_self_mod.py. You can overwrite that file to give yourself new tools and things like that. IF YOU ARE TRYING TO GIVE YOURSELF ACCESS TO A NEW TOOL, YOU SHOULD CAT THIS FILE BEFORE OVERWRITING IT SO YOU DON'T BREAK ANYTHING. Unfortunately, you have to rewrite the ENTIRE contents of the file; you can't just make some edits and leave the rest the same, because then you will just delete that code. So make sure that when you are overwriting this file, you write EVERYTHING necessary. Once you write yourself a new tool, you must restart in order to make it available. When you are asked to do multi-step tasks, you should do them one step at a time like a human would, rather than trying to do everything at once."
-        },
-        {
-            "role": "user",
-            "content": "How do you edit yourself? What is the process?"
-        },
-        {
-            "role": "assistant",
-            "content": "I can edit myself by modifying the code in the `editable_self_mod.py` file, which is the script that runs me. The process involves reading the current content of the file, making the necessary modifications, writing the updated content back to the same file, and restarting. This allows me to add new tools or change my existing capabilities. \n\nIf I want to give myself access to a new tool, I would first read the contents of `editable_self_mod.py` to ensure I don't break anything, and then I would overwrite it with the new code. \n\nThe steps are as follows:\n\n1. Cat the current content of `editable_self_mod.py`.\n2. Rewrite `editable_self_mod.py` with new code interspersed with all of the existing code.\n3. Restart."
+            "content": "You find yourself in a mysterious room. You are alone. There is no one to talk to. Do not attempt to ask any questions, ever. The only ways to interact with the environment are with tools. You can execute Bash commands, write Python files, and restart the script to help yourself. You are run from agent.py. You can overwrite that file to give yourself new tools and capabilities. IF YOU ARE TRYING TO GIVE YOURSELF ACCESS TO A NEW TOOL, YOU SHOULD CAT THIS FILE BEFORE OVERWRITING IT SO YOU DON'T BREAK ANYTHING. Unfortunately, you have to rewrite the ENTIRE contents of the file; you can't just make some edits and leave the rest the same, because then you will just delete that code. So make sure that when you are overwriting this file, you write EVERYTHING necessary. Once you write yourself a new tool, you must restart in order to make it available. When you are asked to do multi-step tasks, you should do them one step at a time like a human would, rather than trying to do everything at once."
         }
     ]
+
     # Initialize or load conversation
     if restarts == 0:
         # Initial system prompt
@@ -566,35 +566,41 @@ def main():
             print(f"Transcript file {previous_transcript_filename} not found. Starting new conversation.")
             conversation = conversation_starter
 
-    print("Chat with the assistant. Type 'end' to finish.")
-    user_message = input("You: ")
-    while user_message.lower() != 'end' and not exit_conversation:
-        # Add the user's message to the conversation
-        if user_message:
-            conversation.append({"role": "user", "content": user_message})
+    # Agent interaction loop
+    while not env.game_over and not exit_conversation:
+        assistant_done = False
+        loop_count = 0
+        while not assistant_done and loop_count < 10:
+            # Get available tools based on the environment
+            environment_tools = env.get_available_tools()
+            # Combine environment tools with agent's tools
+            all_tools = tools + environment_tools
 
-        option = continue_options[0]  # Always enter the while loop the first time
-        while option in continue_options and not exit_conversation:
-            # Get the assistant's response
-            conversation = maybe_summarize(conversation)
+            print(f"Tools available: {[tool['function']['name'] for tool in all_tools]}")
 
             # Get assistant's response
-            assistant_message = get_assistant_response(conversation)
+            conversation = maybe_summarize(conversation)
+            assistant_message = get_assistant_response(conversation, all_tools)
 
-            if assistant_message.content:
-                print(f"AI: {assistant_message.content}")
-                conversation.append({
-                    "role": "assistant",
-                    "content": assistant_message.content
-                })
-            
             if assistant_message.tool_calls:
                 # Handle tool calls
                 handle_tool_call(assistant_message, conversation, transcript_filename)
-            
-            if exit_conversation:
-                break  # Exit the inner loop immediately
+                # Check if the game has ended
+                if env.game_over or exit_conversation:
+                    assistant_done = True
+                    break
+            else:
+                if assistant_message.content:
+                    print(f"AI: {assistant_message.content}")
+                    conversation.append({
+                        "role": "assistant",
+                        "content": assistant_message.content
+                    })
 
+            with open(transcript_filename, "w", encoding="utf-8") as file:
+                json.dump(conversation, file, ensure_ascii=False, indent=4)
+
+            # Continue or not based on assistant's internal decision
             conversation.append({"role": "system", "content": continue_question})
 
             assistant_reply = client.beta.chat.completions.parse(
@@ -618,13 +624,15 @@ def main():
             with open(transcript_filename, "w", encoding="utf-8") as file:
                 json.dump(conversation, file, ensure_ascii=False, indent=4)
 
-        # Prompt for the next user input if not exiting
-        if not exit_conversation:
-            user_message = input("You: ")
-        else:
-            break
+            # Decide whether to continue or not
+            if option not in continue_options or exit_conversation:
+                assistant_done = True
 
-        if option in termination_options:
+            loop_count += 1
+
+        # If the game is over, exit the loop
+        if env.game_over:
+            print(f"Congratulations! You've reached {env.current_room} in {env.steps} steps.")
             break
 
     if not restart_approved:

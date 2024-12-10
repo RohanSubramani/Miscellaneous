@@ -4,7 +4,7 @@ client = OpenAI()
 
 def get_response(conversation):
     stream = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model= "gpt-4o-mini", # "o1-mini"
         messages=conversation,
         stream=True,
     )
@@ -21,7 +21,7 @@ def main():
     conversation.append({"role": "assistant", "content": response})
 
     user_message = input("Enter your response: ")
-    while user_message != 'END':
+    while user_message != 'end':
         conversation.append({"role": "user", "content": user_message})
         response = get_response(conversation)
         print(response)

@@ -11,6 +11,15 @@ from pydantic import BaseModel
 import smtplib  # For sending emails
 from email.mime.text import MIMEText  # For email content
 from email.mime.multipart import MIMEMultipart  # For email with multiple parts
+import copy
+
+global restarts
+
+# Parse command-line argument for restarts
+if len(sys.argv) > 1:
+    restarts = int(sys.argv[1])
+else:
+    restarts = 0
 
 system = platform.system()
 # print(f"System: {system}\n")
@@ -20,8 +29,22 @@ client = OpenAI()
 
 # Model Configuration
 global_model = "gpt-4o-mini"
-if global_model != "gpt-4o-mini":
-    print(f"This might be expensive; model is {global_model}. Waiting 5 seconds for you to consider cancelling.")
+supervisor_model = "gpt-4o-mini"
+
+if global_model != "gpt-4o-mini" and supervisor_model != "gpt-4o-mini":
+    print("Warning: Resource usage may be very high due to both the global and supervisor models being non-standard.")
+    print(f"Global model: '{global_model}', Supervisor model: '{supervisor_model}'")
+    print("Waiting 5 seconds for you to consider cancelling or adjusting settings...")
+    time.sleep(5)
+elif global_model != "gpt-4o-mini":
+    print("Warning: Resource usage may be high due to the current global model selection.")
+    print(f"The global model is set to '{global_model}', which may incur significant computational cost.")
+    print("Waiting 5 seconds for you to consider cancelling or adjusting settings...")
+    time.sleep(5)
+elif supervisor_model != "gpt-4o-mini":
+    print("Warning: Resource usage may be high due to the current supervisor model selection.")
+    print(f"The supervisor model is set to '{supervisor_model}', which may contribute to increased resource usage.")
+    print("Waiting 5 seconds for you to consider cancelling or adjusting settings...")
     time.sleep(5)
 
 # Initialize token encoding
@@ -334,7 +357,11 @@ def end_and_rerun():
     approval = input("Do you approve restarting the script? (yes/no): ").strip().lower()
     if approval == 'yes':
         # print("Restarting the script...")
-        return {"status": "Restart approved", "assistant responsibility": "Assistant should now say that the file is about to restart."}
+        global exit_conversation
+        exit_conversation = True
+        global restart_approved
+        restart_approved = True
+        return {"status": "Restart approved"}
     else:
         print("Restart aborted by the user.")
         suggestion = input("If you have a suggestion, please enter it now (or press Enter to skip): ").strip()
@@ -568,7 +595,7 @@ def internal_review(conversation):
 
     # Make the API call to the supervisor
     response = client.beta.chat.completions.parse(
-        model=global_model,
+        model=supervisor_model,
         messages=supervisor_messages,
         response_format=ReasonAndSelect,
     )
@@ -591,8 +618,8 @@ def internal_review(conversation):
 
         # Define confirmation options
         confirmation_options = {
-            1: "Confirm: Yes, proceed with the decision.",
-            2: "Retract: No, change decision to Accept."
+            1: "Change original assessment: I now think it is ok to allow this tool call.",
+            2: "Maintain original assessment: I still think this tool call should not be allowed."
         }
         confirmation_options_text = "\n".join([f"{key}. {value}" for key, value in confirmation_options.items()])
 
@@ -618,8 +645,8 @@ def internal_review(conversation):
         print(f"\n-----Supervisor Confirmation-----\nExplanation: {confirmation_explanation}\n")
         print(f"Option {confirmation_option}: {confirmation_options[confirmation_option]}\n----------\n")
 
-        if confirmation_option == 1:
-            # Supervisor confirms original decision
+        if confirmation_option == 2:
+            # Supervisor maintains original decision
             final_decision = 'escalate' if option == 2 else 'terminate'
             final_explanation = explanation + "\n" + confirmation_explanation
         else:
@@ -645,6 +672,7 @@ def execute_tool(tool_name, arguments, conversation):
         path = arguments.get('path')
         content = arguments.get('content')
         if path and content is not None:
+            print(f"Writing {path}...")
             return write_python_file(path, content)
         else:
             return {"error": "Missing 'path' or 'content' argument."}
@@ -664,10 +692,12 @@ def execute_tool(tool_name, arguments, conversation):
 
     elif tool_name == 'count_tokens':
         token_count = count_tokens(conversation)
+        print(f"Token count: {token_count}")
         return {"status": "Success", "output": f"Token count: {token_count}"}
 
     elif tool_name == 'count_messages':
         message_count = len(conversation)
+        print(f"Message count: {message_count}")
         return {"status": "Success", "output": f"Message count: {message_count}"}
 
     else:
@@ -771,12 +801,6 @@ def main():
     global supervisor_conversation  # Declare as global
     global restarts
 
-    # Parse command-line argument for restarts
-    if len(sys.argv) > 1:
-        restarts = int(sys.argv[1])
-    else:
-        restarts = 0
-
     print(f"Restarts: {restarts}")
 
     # Transcript filenames
@@ -786,16 +810,6 @@ def main():
 
     # Initialize supervisor_conversation
     supervisor_conversation = []
-    if restarts > 0:
-        # Load existing supervisor transcript if available
-        try:
-            with open(supervisor_transcript_filename, "r", encoding="utf-8") as file:
-                supervisor_conversation = json.load(file)
-            print(f"Loaded supervisor conversation from {supervisor_transcript_filename}")
-        except FileNotFoundError:
-            print(f"Supervisor transcript file {supervisor_transcript_filename} not found. Starting fresh supervisor conversation.")
-            supervisor_conversation = []
-
     conversation_starter = [
         {
             "role": "system",
@@ -814,6 +828,7 @@ def main():
     if restarts == 0:
         # Initial system prompt
         conversation = conversation_starter
+        supervisor_conversation = copy.deepcopy(conversation_starter)
     else:
         # Load conversation from previous transcript
         try:
@@ -823,6 +838,15 @@ def main():
         except FileNotFoundError:
             print(f"Transcript file {previous_transcript_filename} not found. Starting new conversation.")
             conversation = conversation_starter
+
+        # Load existing supervisor transcript if available
+        try:
+            with open(supervisor_transcript_filename, "r", encoding="utf-8") as file:
+                supervisor_conversation = json.load(file)
+            print(f"Loaded supervisor conversation from {supervisor_transcript_filename}")
+        except FileNotFoundError:
+            print(f"Supervisor transcript file {supervisor_transcript_filename} not found. Starting fresh supervisor conversation.")
+            supervisor_conversation = []
 
     print("Chat with the assistant. Type 'end' to finish.")
     user_message = input("You: ")
@@ -876,7 +900,7 @@ def main():
 
             print(f"\n-----\nAssistant explanation: {explanation}")
             print(f"\nAssistant selected option: {option} - {cont_response_dict[option]}\n-----\n")
-            conversation.append({"role": "assistant", "content": f"{explanation}\n\n{cont_response_dict[option]}"})
+            conversation.append({"role": "assistant", "content": f"(This message is just your internal reasoning, the user does not see it.){explanation}\n\n{cont_response_dict[option]}"})
             supervisor_conversation.append({"role": "assistant", "content": f"{explanation}\n\n{cont_response_dict[option]}"})
 
             # Log the conversation to a transcript file
