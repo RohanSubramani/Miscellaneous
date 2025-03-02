@@ -7,13 +7,14 @@ import os
 from pydantic import BaseModel
 import tiktoken
 
-
-
 # Initialize the OpenAI client
 client = OpenAI()
 
 global_model = "gpt-4o-mini"
-encoding = tiktoken.encoding_for_model(global_model)
+try:
+    encoding = tiktoken.encoding_for_model(global_model)
+except (KeyError, ValueError):
+    encoding = tiktoken.get_encoding("o200k_base")
 
 def count_tokens(conversation):
     """Count the number of tokens in the conversation."""

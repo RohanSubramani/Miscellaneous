@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import torch as t
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
@@ -51,7 +52,7 @@ def generate_exhaustive_modular_subtraction_data(mod, train_split=0.6, val_split
     print(f"Datasets generated and saved to 'train_{mod}.csv', 'val_{mod}.csv', and 'test_{mod}.csv'")
 
 # Load datasets from CSV files and create DataLoader objects
-def load_dataloaders(mod, batch_size):
+def load_dataloaders(mod, batch_size, one_hot=False):
     # Check for CSV files and generate them if not available
     train_file = f'./data/train_{mod}.csv'
     val_file = f'./data/val_{mod}.csv'
@@ -66,27 +67,59 @@ def load_dataloaders(mod, batch_size):
     test_data = pd.read_csv(test_file)
 
     # Result shape and type is different here for classification    
-    train_dataset = TensorDataset(t.tensor(train_data[['A', 'B']].values, dtype=t.float32),
-                                  t.tensor(train_data['Result'].values, dtype=t.long).view(-1))
-    val_dataset = TensorDataset(t.tensor(val_data[['A', 'B']].values, dtype=t.float32),
-                                t.tensor(val_data['Result'].values, dtype=t.long).view(-1))
-    test_dataset = TensorDataset(t.tensor(test_data[['A', 'B']].values, dtype=t.float32),
-                                 t.tensor(test_data['Result'].values, dtype=t.long).view(-1))
+    x_train = t.tensor(train_data[['A', 'B']].values, dtype=t.float32)
+    x_val = t.tensor(val_data[['A', 'B']].values, dtype=t.float32)
+    x_test = t.tensor(test_data[['A', 'B']].values, dtype=t.float32)
+
+    if one_hot:
+        x_train = one_hot_encode_inputs(x_train,mod)
+        x_val = one_hot_encode_inputs(x_val,mod)
+        x_test = one_hot_encode_inputs(x_test,mod)
+    
+    y_train = t.tensor(train_data['Result'].values, dtype=t.long).view(-1)
+    y_val = t.tensor(val_data['Result'].values, dtype=t.long).view(-1)
+    y_test = t.tensor(test_data['Result'].values, dtype=t.long).view(-1)
+
+    train_dataset = TensorDataset(x_train,y_train)
+    val_dataset = TensorDataset(x_val, y_val)
+    test_dataset = TensorDataset(x_test, y_test)
     
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     
-    return train_loader, val_loader, test_loader, test_dataset # Added test_dataset to return
+    return train_loader, val_loader, test_loader, train_dataset, val_dataset, test_dataset # Added datasets to return
+
+def one_hot_encode_inputs(inputs, mod):
+    """
+    Converts a tensor of inputs with shape [N, 2] containing scalar values
+    for A and B into a one-hot encoded tensor of shape [N, 2 * mod].
+    
+    Parameters:
+        inputs (Tensor): A tensor of shape [N, 2] (floats representing integers).
+        mod (int): The modulus, used to define the size of one-hot encoding.
+    
+    Returns:
+        Tensor: A tensor of shape [N, 2 * mod] with one-hot encoded values.
+    """
+    # Convert float tensor to long for one-hot encoding
+    inputs_int = inputs.to(t.int64)
+    
+    # One-hot encode each column independently.
+    a_onehot = F.one_hot(inputs_int[:, 0], num_classes=mod).float()  # Shape: [N, mod]
+    b_onehot = F.one_hot(inputs_int[:, 1], num_classes=mod).float()  # Shape: [N, mod]
+    
+    # Concatenate the one-hot encoded columns along the feature dimension.
+    return t.cat([a_onehot, b_onehot], dim=1)
 
 # Define the MLP model
 # Now I need #(classes) = mod output neurons, and a softmax
 class MLP(nn.Module):
-    def __init__(self,hn_tuple,num_classes): # hn is for "hidden neurons"
+    def __init__(self,hn_tuple,num_classes,input_dim=2): # hn is for "hidden neurons"
         super().__init__()
         layers = []
         
-        prev_layer_hn = 2
+        prev_layer_hn = input_dim
         for hn in hn_tuple:
             layers.append(nn.Linear(prev_layer_hn,hn))
             layers.append(nn.ReLU())
@@ -100,9 +133,9 @@ class MLP(nn.Module):
 
 # Train the model
 # Criterion changes to cross entropy loss here
-def train(model, train_loader, val_loader, epochs=100, lr=0.001):
+def train(model, train_loader, val_loader, epochs=100, lr=0.001, wd=0):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
     
     total_batches = epochs * (len(train_loader) + len(val_loader))
     avg_val_loss = 100 # Just for first epoch, before first validation
@@ -163,41 +196,58 @@ def evaluate(model, test_loader):
     avg_loss = total_loss / len(test_loader)
     accuracy = correct_predictions / total_samples * 100  # Accuracy in percentage
 
-    print(f"Test Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%")
+    print(f"Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%")
     return avg_loss, accuracy
 
 def show_test_examples(model, test_dataset, num_samples=5):
-    # Ask user if they want to see the results
-
+    """
+    Displays a few test examples in a human readable way.
+    If the inputs are one-hot encoded (i.e. a vector of length 2*mod), it decodes them 
+    back to the original (A, B) pair.
+    """
     show_results = input("Do you want to see the results (y/n)? ").strip().lower()
-    if show_results == 'y':
-        model.eval()
-        criterion = nn.CrossEntropyLoss()
+    if show_results != 'y':
+        return
 
-        indices = np.random.choice(len(test_dataset), num_samples, replace=False)
-    
-        # Fetch samples and targets using the random indices
-        random_samples = []
-        random_targets = []
-        for idx in indices:
-            sample, target = test_dataset[idx]
-            random_samples.append(sample)
-            random_targets.append(target)
-        
-        # Convert lists to tensors
-        random_samples = t.stack(random_samples)
-        random_targets = t.tensor(random_targets)
-        
-        with t.no_grad():
-            # Get predictions from the model
-            outputs = model(random_samples)
-            _, predictions = t.max(outputs, 1)
-            
-        for i in range(num_samples):
-            print(f"Sample {i+1}:")
-            print(f"  Input: {random_samples[i]}")
-            print(f"  Correct Output: {random_targets[i].item()}")
-            print(f"  Predicted Output: {predictions[i].item()}\n")
+    model.eval()
+    import numpy as np
+    import torch as t
+
+    indices = np.random.choice(len(test_dataset), num_samples, replace=False)
+
+    random_samples = []
+    random_targets = []
+    for idx in indices:
+        sample, target = test_dataset[idx]
+        random_samples.append(sample)
+        random_targets.append(target)
+
+    # Stack the samples and targets for batch processing
+    random_samples = t.stack(random_samples)
+    random_targets = t.tensor(random_targets)
+
+    with t.no_grad():
+        outputs = model(random_samples)
+        _, predictions = t.max(outputs, 1)
+
+    # Display each sample
+    for i in range(num_samples):
+        sample = random_samples[i]
+        # If the input is one-hot encoded, decode it.
+        if sample.numel() > 2:
+            # Assuming sample shape is [2*mod], deduce mod from the length.
+            mod = sample.numel() // 2
+            a_val = t.argmax(sample[:mod]).item()
+            b_val = t.argmax(sample[mod:]).item()
+            input_str = f"({a_val}, {b_val})"
+        else:
+            # Otherwise, simply display the sample as a list.
+            input_str = f"{sample.tolist()}"
+
+        print(f"Sample {i+1}:")
+        print(f"  Input: {input_str}")
+        print(f"  Correct Output: {random_targets[i].item()}")
+        print(f"  Predicted Output: {predictions[i].item()}\n")
 
 def run_experiments(moduli, hidden_layer_configs, batch_size, epochs, lr, results_file='results.json'):
     # Load existing results

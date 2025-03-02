@@ -1,1 +1,2 @@
-python main.py --moduli 6 11 24 48 63 111  --hidden_layers 300 200,200,200,200,200,200,200,200 600,600,600 --batch_size 2048 --epochs 5000 --lr 0.001 --results_file results.json
+# python main.py --moduli 6 11 24 48 63 111  --hidden_layers 300 200,200,200,200,200,200,200,200 600,600,600 --batch_size 2048 --epochs 5000 --lr 0.001 --results_file results.json
+python main.py --mod 211 --hidden_layers 200,200,200 --batch_size 2048 --epochs 1000 --lr 0.001 --wd 1e-4

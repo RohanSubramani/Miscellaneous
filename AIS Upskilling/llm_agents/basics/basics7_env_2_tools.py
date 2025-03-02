@@ -11,7 +11,10 @@ global_model = "gpt-4o-mini"
 if global_model != "gpt-4o-mini":
     print(f"This might be expensive; model is {global_model}. Waiting 5 seconds for you to consider cancelling.")
     time.sleep(5)
-encoding = tiktoken.encoding_for_model(global_model)
+try:
+    encoding = tiktoken.encoding_for_model(global_model)
+except KeyError:
+    encoding = tiktoken.get_encoding("o200k_base")
 
 def count_tokens(conversation):
     """Count the number of tokens in the conversation."""
