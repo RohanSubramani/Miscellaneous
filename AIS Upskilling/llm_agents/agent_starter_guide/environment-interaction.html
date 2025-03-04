@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environment Interaction - LLM Agent Development Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/themes/prism-tomorrow.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="index.html" class="flex items-center py-4">
+                            <span class="font-semibold text-gray-500 text-lg">LLM Agent Guide</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <header class="mb-12">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Environment Interaction</h1>
+                <div class="progress-bar mb-4">
+                    <div class="progress-bar-fill" style="width: 83.33%"></div>
+                </div>
+                <p class="text-xl text-gray-600">Create and interact with custom environments for LLM agents</p>
+            </header>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Creating Custom Environments</h2>
+                <p class="text-gray-600 mb-6">
+                    Learn how to create custom environments that your LLM agents can interact with:
+                </p>
+                <pre><code class="language-python">from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
+
+@dataclass
+class Observation:
+    """Represents what the agent observes in the environment."""
+    state: Dict[str, Any]
+    reward: float
+    done: bool
+    info: Dict[str, Any]
+
+class Environment(ABC):
+    """Base class for custom environments."""
+    
+    @abstractmethod
+    def reset(self) -> Observation:
+        """Reset the environment to initial state."""
+        pass
+    
+    @abstractmethod
+    def step(self, action: Dict[str, Any]) -> Observation:
+        """Take an action in the environment."""
+        pass
+    
+    @abstractmethod
+    def render(self) -> str:
+        """Return a string representation of the current state."""
+        pass
+
+class GridWorld(Environment):
+    """Example implementation of a grid world environment."""
+    
+    def __init__(self, size: int = 5):
+        self.size = size
+        self.agent_pos = [0, 0]
+        self.goal_pos = [size-1, size-1]
+        self.obstacles = self._generate_obstacles()
+    
+    def reset(self) -> Observation:
+        self.agent_pos = [0, 0]
+        return Observation(
+            state=self._get_state(),
+            reward=0.0,
+            done=False,
+            info={}
+        )
+    
+    def step(self, action: Dict[str, Any]) -> Observation:
+        direction = action.get("direction", "")
+        new_pos = self.agent_pos.copy()
+        
+        if direction == "up":
+            new_pos[0] = max(0, new_pos[0] - 1)
+        elif direction == "down":
+            new_pos[0] = min(self.size - 1, new_pos[0] + 1)
+        elif direction == "left":
+            new_pos[1] = max(0, new_pos[1] - 1)
+        elif direction == "right":
+            new_pos[1] = min(self.size - 1, new_pos[1] + 1)
+        
+        # Check if move is valid
+        if tuple(new_pos) not in self.obstacles:
+            self.agent_pos = new_pos
+        
+        # Calculate reward and check if done
+        done = self.agent_pos == self.goal_pos
+        reward = 1.0 if done else -0.1
+        
+        return Observation(
+            state=self._get_state(),
+            reward=reward,
+            done=done,
+            info={"steps": self.steps}
+        )
+    
+    def render(self) -> str:
+        grid = []
+        for i in range(self.size):
+            row = []
+            for j in range(self.size):
+                if [i, j] == self.agent_pos:
+                    row.append("A")
+                elif [i, j] == self.goal_pos:
+                    row.append("G")
+                elif (i, j) in self.obstacles:
+                    row.append("#")
+                else:
+                    row.append(".")</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Environment Integration</h2>
+                <p class="text-gray-600 mb-6">
+                    Integrate custom environments with your LLM agent:
+                </p>
+                <pre><code class="language-python">class EnvironmentAgent:
+    """Agent that interacts with custom environments."""
+    
+    def __init__(self, environment: Environment, model: str = "gpt-4"):
+        self.environment = environment
+        self.client = OpenAI()
+        self.model = model
+        self.conversation_history = []
+    
+    def _get_environment_description(self, observation: Observation) -> str:
+        """Convert environment observation to text description."""
+        return f"""
+Current State: {observation.state}
+Reward: {observation.reward}
+Environment View:
+{self.environment.render()}
+"""
+    
+    async def act(self) -> Dict[str, Any]:
+        """Decide on an action based on current observation."""
+        observation = self.environment.step(self.last_action)
+        env_description = self._get_environment_description(observation)
+        
+        # Add environment state to conversation
+        self.conversation_history.append({
+            "role": "system",
+            "content": f"Environment Update:\n{env_description}"
+        })
+        
+        # Get agent's decision
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=self.conversation_history,
+            tools=[{
+                "type": "function",
+                "function": {
+                    "name": "take_action",
+                    "description": "Take an action in the environment",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "direction": {
+                                "type": "string",
+                                "enum": ["up", "down", "left", "right"]
+                            }
+                        },
+                        "required": ["direction"]
+                    }
+                }
+            }]
+        )
+        
+        # Process the response
+        message = response.choices[0].message
+        if message.tool_calls:
+            tool_call = message.tool_calls[0]
+            action = json.loads(tool_call.function.arguments)
+            self.last_action = action
+            return action
+        
+        return {"direction": "none"}</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Advanced Environment Features</h2>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">1. Multi-Agent Environments</h3>
+                        <p class="text-gray-600">Create environments that support multiple agents:</p>
+                        <pre><code class="language-python">class MultiAgentEnvironment(Environment):
+    def __init__(self, num_agents: int):
+        self.num_agents = num_agents
+        self.agent_positions = {i: [0, 0] for i in range(num_agents)}
+        self.shared_resources = {}
+    
+    def step(self, actions: Dict[int, Dict[str, Any]]) -> Dict[int, Observation]:
+        """Process actions from multiple agents simultaneously."""
+        observations = {}
+        for agent_id, action in actions.items():
+            # Process individual agent actions
+            observations[agent_id] = self._process_agent_action(agent_id, action)
+        return observations</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">2. Partial Observability</h3>
+                        <p class="text-gray-600">Implement environments with limited agent visibility:</p>
+                        <pre><code class="language-python">class PartiallyObservableEnv(Environment):
+    def __init__(self, view_distance: int):
+        self.view_distance = view_distance
+    
+    def get_visible_state(self, agent_pos: List[int]) -> Dict[str, Any]:
+        """Return only the state visible to the agent."""
+        visible_area = self._get_visible_area(agent_pos)
+        return {
+            "visible_cells": visible_area,
+            "agent_pos": agent_pos,
+            "local_info": self._get_local_information(visible_area)
+        }</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Testing and Visualization</h2>
+                <p class="text-gray-600 mb-6">
+                    Implement testing and visualization tools for your environments:
+                </p>
+                <pre><code class="language-python">import matplotlib.pyplot as plt
+import numpy as np
+
+class EnvironmentVisualizer:
+    def __init__(self, environment: Environment):
+        self.environment = environment
+        self.history = []
+    
+    def record_step(self, observation: Observation):
+        """Record an observation for later visualization."""
+        self.history.append(observation)
+    
+    def plot_trajectory(self):
+        """Plot the agent's trajectory through the environment."""
+        plt.figure(figsize=(10, 10))
+        # Plot environment grid
+        plt.grid(True)
+        plt.xlim(-0.5, self.environment.size - 0.5)
+        plt.ylim(-0.5, self.environment.size - 0.5)
+        
+        # Plot trajectory
+        positions = [obs.state["agent_pos"] for obs in self.history]
+        x_coords, y_coords = zip(*positions)
+        plt.plot(x_coords, y_coords, 'b-', label='Agent Path')
+        
+        # Plot start and end points
+        plt.plot(x_coords[0], y_coords[0], 'go', label='Start')
+        plt.plot(x_coords[-1], y_coords[-1], 'ro', label='End')
+        
+        plt.legend()
+        plt.title('Agent Trajectory')
+        plt.show()
+
+def test_environment(env: Environment, num_episodes: int = 100) -> Dict[str, float]:
+    """Run test episodes and collect statistics."""
+    stats = {
+        "avg_reward": 0.0,
+        "success_rate": 0.0,
+        "avg_steps": 0.0
+    }
+    
+    for _ in range(num_episodes):
+        obs = env.reset()
+        episode_reward = 0
+        steps = 0
+        
+        while not obs.done and steps < 1000:
+            # Take random action for testing
+            action = {"direction": np.random.choice(["up", "down", "left", "right"])}
+            obs = env.step(action)
+            episode_reward += obs.reward
+            steps += 1
+        
+        stats["avg_reward"] += episode_reward
+        stats["success_rate"] += float(obs.done)
+        stats["avg_steps"] += steps
+    
+    # Calculate averages
+    for key in stats:
+        stats[key] /= num_episodes
+    
+    return stats</code></pre>
+            </div>
+
+            <div class="flex justify-between items-center mt-12">
+                <a href="advanced-features.html" class="btn btn-primary">← Advanced Features</a>
+                <a href="safety-best-practices.html" class="btn btn-primary">Next: Safety & Best Practices →</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>Created with ❤️ by the LLM Agent Development Community</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/components/prism-python.min.js"></script>
+</body>
+</html> 

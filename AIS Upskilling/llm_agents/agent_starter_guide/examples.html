@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examples & Projects - LLM Agent Development Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/themes/prism-tomorrow.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="index.html" class="flex items-center py-4">
+                            <span class="font-semibold text-gray-500 text-lg">LLM Agent Guide</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <header class="mb-12">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Examples & Projects</h1>
+                <p class="text-xl text-gray-600">Real-world applications and complete projects using LLM agents</p>
+            </header>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">1. Code Review Agent</h2>
+                <p class="text-gray-600 mb-6">
+                    An LLM agent that performs automated code reviews by analyzing pull requests:
+                </p>
+                <pre><code class="language-python">from typing import List, Dict, Any
+import os
+from github import Github
+from openai import OpenAI
+
+class CodeReviewAgent:
+    def __init__(self):
+        self.github = Github(os.getenv("GITHUB_TOKEN"))
+        self.client = OpenAI()
+        self.review_history = []
+
+    def analyze_diff(self, diff: str) -> Dict[str, Any]:
+        """Analyze code changes using the LLM."""
+        response = self.client.chat.completions.create(
+            model="gpt-4",
+            messages=[{
+                "role": "system",
+                "content": "You are a code review expert. Analyze the following diff:"
+            }, {
+                "role": "user",
+                "content": diff
+            }],
+            tools=[{
+                "type": "function",
+                "function": {
+                    "name": "create_review",
+                    "description": "Create a code review with findings",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "issues": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "severity": {
+                                            "type": "string",
+                                            "enum": ["high", "medium", "low"]
+                                        },
+                                        "description": {"type": "string"},
+                                        "suggestion": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "summary": {"type": "string"}
+                        },
+                        "required": ["issues", "summary"]
+                    }
+                }
+            }]
+        )
+        return response.choices[0].message
+
+    def review_pull_request(self, repo_name: str, pr_number: int) -> None:
+        """Review a specific pull request."""
+        repo = self.github.get_repo(repo_name)
+        pr = repo.get_pull(pr_number)
+        
+        # Get the diff
+        diff = pr.get_files()
+        
+        # Analyze each file
+        for file in diff:
+            review = self.analyze_diff(file.patch)
+            self.submit_review(pr, review)
+            self.review_history.append({
+                "file": file.filename,
+                "review": review
+            })
+
+    def submit_review(self, pr, review) -> None:
+        """Submit the review comments to GitHub."""
+        comments = []
+        for issue in review.issues:
+            comments.append(
+                f"**{issue['severity'].upper()}**: {issue['description']}\n\n"
+                f"Suggestion: {issue['suggestion']}"
+            )
+        
+        pr.create_review(
+            body=f"# Code Review Summary\n{review.summary}\n\n"
+                 f"## Detailed Findings\n\n" + "\n\n".join(comments),
+            event="COMMENT"
+        )</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">2. Data Analysis Agent</h2>
+                <p class="text-gray-600 mb-6">
+                    An agent that performs data analysis and visualization based on natural language queries:
+                </p>
+                <pre><code class="language-python">import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from typing import Dict, Any, List
+from openai import OpenAI
+
+class DataAnalysisAgent:
+    def __init__(self, data_path: str):
+        self.client = OpenAI()
+        self.df = pd.read_csv(data_path)
+        self.analysis_history = []
+        
+    def analyze_data(self, query: str) -> Dict[str, Any]:
+        """Process natural language query and perform data analysis."""
+        response = self.client.chat.completions.create(
+            model="gpt-4",
+            messages=[{
+                "role": "system",
+                "content": f"You are a data analysis expert. Available columns: {list(self.df.columns)}"
+            }, {
+                "role": "user",
+                "content": query
+            }],
+            tools=[{
+                "type": "function",
+                "function": {
+                    "name": "analyze",
+                    "description": "Perform data analysis",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "operations": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["groupby", "filter", "sort", "aggregate"]
+                                        },
+                                        "columns": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        },
+                                        "parameters": {"type": "object"}
+                                    }
+                                }
+                            },
+                            "visualization": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {"type": "string"},
+                                    "x": {"type": "string"},
+                                    "y": {"type": "string"},
+                                    "title": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        )
+        return self.execute_analysis(response.choices[0].message)
+    
+    def execute_analysis(self, analysis_plan: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the analysis plan generated by the LLM."""
+        result = self.df.copy()
+        
+        # Apply operations
+        for op in analysis_plan["operations"]:
+            if op["type"] == "filter":
+                result = result.query(op["parameters"]["condition"])
+            elif op["type"] == "groupby":
+                result = result.groupby(op["columns"]).agg(op["parameters"]["aggregations"])
+            elif op["type"] == "sort":
+                result = result.sort_values(op["columns"], **op["parameters"])
+        
+        # Create visualization
+        if "visualization" in analysis_plan:
+            viz = analysis_plan["visualization"]
+            plt.figure(figsize=(10, 6))
+            
+            if viz["type"] == "bar":
+                sns.barplot(data=result, x=viz["x"], y=viz["y"])
+            elif viz["type"] == "line":
+                sns.lineplot(data=result, x=viz["x"], y=viz["y"])
+            elif viz["type"] == "scatter":
+                sns.scatterplot(data=result, x=viz["x"], y=viz["y"])
+            
+            plt.title(viz["title"])
+            plt.tight_layout()
+            
+            # Save the plot
+            plt.savefig("analysis_result.png")
+        
+        self.analysis_history.append({
+            "result": result,
+            "visualization": analysis_plan.get("visualization")
+        })
+        
+        return {
+            "data": result,
+            "visualization": "analysis_result.png" if "visualization" in analysis_plan else None
+        }</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">3. Customer Support Agent</h2>
+                <p class="text-gray-600 mb-6">
+                    An intelligent customer support agent that can handle queries and perform actions:
+                </p>
+                <pre><code class="language-python">from typing import Dict, Any, Optional
+from datetime import datetime
+import json
+from openai import OpenAI
+
+class CustomerSupportAgent:
+    def __init__(self):
+        self.client = OpenAI()
+        self.ticket_db = {}
+        self.knowledge_base = {}
+        self.conversation_history = []
+    
+    def handle_query(self, user_id: str, query: str) -> Dict[str, Any]:
+        """Process customer query and take appropriate action."""
+        # Add query to conversation history
+        self.conversation_history.append({
+            "role": "user",
+            "content": query,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Get agent's response
+        response = self.client.chat.completions.create(
+            model="gpt-4",
+            messages=[{
+                "role": "system",
+                "content": "You are a customer support agent with access to various tools."
+            }, {
+                "role": "user",
+                "content": query
+            }],
+            tools=[
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "create_ticket",
+                        "description": "Create a support ticket",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "priority": {
+                                    "type": "string",
+                                    "enum": ["high", "medium", "low"]
+                                },
+                                "category": {"type": "string"},
+                                "description": {"type": "string"}
+                            },
+                            "required": ["priority", "category", "description"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search_knowledge_base",
+                        "description": "Search the knowledge base for solutions",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "keywords": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                }
+                            },
+                            "required": ["keywords"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "escalate_to_human",
+                        "description": "Escalate the issue to a human agent",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "reason": {"type": "string"}
+                            },
+                            "required": ["reason"]
+                        }
+                    }
+                }
+            ]
+        )
+        
+        # Process the response
+        return self.process_response(user_id, response.choices[0].message)
+    
+    def process_response(self, user_id: str, response: Dict[str, Any]) -> Dict[str, Any]:
+        """Process the agent's response and execute necessary actions."""
+        if response.tool_calls:
+            tool_call = response.tool_calls[0]
+            tool_name = tool_call.function.name
+            arguments = json.loads(tool_call.function.arguments)
+            
+            if tool_name == "create_ticket":
+                ticket_id = self.create_ticket(user_id, **arguments)
+                return {
+                    "action": "ticket_created",
+                    "ticket_id": ticket_id,
+                    "message": f"Created ticket #{ticket_id} with {arguments['priority']} priority"
+                }
+            
+            elif tool_name == "search_knowledge_base":
+                results = self.search_knowledge_base(arguments["keywords"])
+                return {
+                    "action": "knowledge_base_results",
+                    "results": results
+                }
+            
+            elif tool_name == "escalate_to_human":
+                return {
+                    "action": "escalated",
+                    "reason": arguments["reason"],
+                    "message": "Your query has been escalated to a human agent"
+                }
+        
+        return {
+            "action": "response",
+            "message": response.content
+        }
+    
+    def create_ticket(self, user_id: str, priority: str, 
+                     category: str, description: str) -> str:
+        """Create a new support ticket."""
+        ticket_id = str(len(self.ticket_db) + 1)
+        self.ticket_db[ticket_id] = {
+            "user_id": user_id,
+            "priority": priority,
+            "category": category,
+            "description": description,
+            "status": "open",
+            "created_at": datetime.now().isoformat()
+        }
+        return ticket_id
+    
+    def search_knowledge_base(self, keywords: List[str]) -> List[Dict[str, Any]]:
+        """Search the knowledge base for relevant articles."""
+        # Implement knowledge base search logic
+        results = []
+        for article_id, article in self.knowledge_base.items():
+            if any(keyword.lower() in article["content"].lower() 
+                  for keyword in keywords):
+                results.append(article)
+        return results</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Best Practices from Examples</h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">1. Modular Design</h3>
+                        <p class="text-gray-600">Break down functionality into clear, focused classes and methods.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">2. State Management</h3>
+                        <p class="text-gray-600">Maintain clear state through class attributes and history tracking.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">3. Error Handling</h3>
+                        <p class="text-gray-600">Implement robust error handling and validation for all operations.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">4. Tool Definition</h3>
+                        <p class="text-gray-600">Define clear, well-documented tools with proper parameter validation.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">5. History Tracking</h3>
+                        <p class="text-gray-600">Maintain comprehensive history of actions and decisions for debugging.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-12">
+                <a href="safety-best-practices.html" class="btn btn-primary">← Safety & Best Practices</a>
+                <a href="index.html" class="btn btn-primary">Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>Created with ❤️ by the LLM Agent Development Community</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/components/prism-python.min.js"></script>
+</body>
+</html> 

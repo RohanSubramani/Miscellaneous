@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Usage - LLM Agent Development Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/themes/prism-tomorrow.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="index.html" class="flex items-center py-4">
+                            <span class="font-semibold text-gray-500 text-lg">LLM Agent Guide</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <header class="mb-12">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Tool Usage</h1>
+                <div class="progress-bar mb-4">
+                    <div class="progress-bar-fill" style="width: 33.33%"></div>
+                </div>
+                <p class="text-xl text-gray-600">Giving your LLM agent the power to interact with the world</p>
+            </header>
+
+            <div class="info-box mb-8">
+                <p class="text-gray-600">
+                    Tools are what make LLM agents truly powerful. They allow your agent to perform actions in the real world, like sending emails, executing code, or controlling devices. Let's learn how to create and use tools effectively!
+                </p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Understanding Tools</h2>
+                <p class="text-gray-600 mb-6">
+                    A tool is like a special ability you give to your AI assistant. Each tool:
+                </p>
+                <ul class="custom-list mb-6">
+                    <li>Has a specific name and purpose</li>
+                    <li>Can take input parameters (arguments)</li>
+                    <li>Returns results that the AI can understand</li>
+                    <li>Is defined with clear instructions for the AI</li>
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Simple Tool Example</h2>
+                <p class="text-gray-600 mb-6">
+                    Let's look at a simple tool that can set a numerical value:
+                </p>
+                <pre><code class="language-python"># Initialize a variable that our tool will modify
+value = 0.0
+
+def value_setter(new_value):
+    """Set the variable 'value' to a specified float value."""
+    global value
+    value = new_value
+    return {"value": value}
+
+# Define the tool for the AI to use
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "value_setter",
+            "description": "Set the variable 'value' to a specified float value.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "new_value": {
+                        "type": "number",
+                        "description": "The new value to set."
+                    }
+                },
+                "required": ["new_value"],
+                "additionalProperties": False
+            }
+        }
+    }
+]</code></pre>
+                <div class="info-box mt-4">
+                    <p class="text-sm text-gray-600">
+                        <span class="font-semibold">💡 Key Point:</span> The tool definition includes a clear description and specifies exactly what parameters it needs.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">More Complex Tools</h2>
+                <p class="text-gray-600 mb-6">
+                    Here's an example of a more powerful tool that can execute Python code:
+                </p>
+                <pre><code class="language-python">def execute_code(code_str):
+    """
+    Executes Python code safely with user approval.
+    
+    Parameters:
+    - code_str (str): The code to be executed.
+    
+    Returns:
+    - dict: Contains execution status and output
+    """
+    print("The following code is requested to be executed:\n")
+    print(code_str)
+    approval = input("\nDo you approve executing this code? (yes/no): ")
+    
+    if approval.lower() == 'yes':
+        try:
+            exec_namespace = {}
+            exec(code_str, exec_namespace, exec_namespace)
+            output = exec_namespace.get('output', None)
+            return {
+                "status": "Code executed successfully.",
+                "output": output
+            }
+        except Exception as e:
+            return {
+                "status": "Error during execution.",
+                "error": str(e)
+            }
+    else:
+        return {"status": "Execution aborted by user."}</code></pre>
+                <div class="warning-box mt-4">
+                    <p class="text-sm text-gray-600">
+                        <span class="font-semibold">⚠️ Safety First:</span> Always implement user approval and proper error handling for tools that could be dangerous.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Handling Tool Calls</h2>
+                <p class="text-gray-600 mb-6">
+                    When the AI wants to use a tool, we need to handle it properly:
+                </p>
+                <pre><code class="language-python">def handle_tool_call(assistant_message, conversation):
+    """Handle a tool call from the assistant."""
+    # Get the tool call details
+    tool_call = assistant_message.tool_calls[0]
+    tool_name = tool_call.function.name
+    arguments = json.loads(tool_call.function.arguments)
+    
+    # Add the assistant's request to conversation
+    conversation.append({
+        "role": "assistant",
+        "content": assistant_message.content,
+        "tool_calls": [
+            {
+                "id": tool_call.id,
+                "type": tool_call.type,
+                "function": {
+                    "name": tool_name,
+                    "arguments": tool_call.function.arguments
+                }
+            }
+        ]
+    })
+    
+    # Execute the appropriate tool
+    if tool_name == 'value_setter':
+        new_value = arguments.get('new_value')
+        if new_value is not None:
+            result = value_setter(new_value)
+        else:
+            result = {"error": "Missing new_value argument"}
+    else:
+        result = {"error": f"Unknown tool: {tool_name}"}
+    
+    # Add the tool result to conversation
+    conversation.append({
+        "role": "tool",
+        "content": json.dumps(result),
+        "tool_call_id": tool_call.id
+    })</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Best Practices for Tool Development</h2>
+                <div class="space-y-4">
+                    <div class="info-box">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">1. Clear Descriptions</h3>
+                        <p class="text-gray-600">Make your tool descriptions crystal clear so the AI knows exactly what the tool does and how to use it.</p>
+                    </div>
+                    <div class="info-box">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">2. Parameter Validation</h3>
+                        <p class="text-gray-600">Always validate tool parameters before using them to prevent errors.</p>
+                    </div>
+                    <div class="info-box">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">3. Error Handling</h3>
+                        <p class="text-gray-600">Implement proper error handling and provide helpful error messages.</p>
+                    </div>
+                    <div class="info-box">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">4. Safety Measures</h3>
+                        <p class="text-gray-600">Include safety checks and user confirmations for potentially dangerous operations.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Common Tool Types</h2>
+                <ul class="custom-list">
+                    <li>Data manipulation tools (like our value_setter)</li>
+                    <li>File operations (reading/writing files)</li>
+                    <li>API interactions (making web requests)</li>
+                    <li>System operations (running commands)</li>
+                    <li>Communication tools (sending emails/messages)</li>
+                </ul>
+            </div>
+
+            <div class="flex justify-between items-center mt-12">
+                <a href="basic-concepts.html" class="btn btn-primary">← Basic Concepts</a>
+                <a href="advanced-features.html" class="btn btn-primary">Next: Advanced Features →</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>Created with ❤️ by the LLM Agent Development Community</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/components/prism-python.min.js"></script>
+</body>
+</html> 

@@ -1,0 +1,1 @@
+This folder was written by Claude in Cursor, mostly one-shotted. It's not bad but it's also not a great educational resource.

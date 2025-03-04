@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Agent Development Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="index.html" class="flex items-center py-4">
+                            <span class="font-semibold text-gray-500 text-lg">LLM Agent Guide</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Building LLM Agents: A Step-by-Step Guide</h1>
+            <p class="text-xl text-gray-600 mb-8">Learn how to create AI assistants that can understand, think, and act</p>
+            
+            <div class="info-box max-w-2xl mx-auto">
+                <p class="text-gray-600">
+                    Welcome! This guide will teach you how to build AI agents using Large Language Models (LLMs). Whether you're a beginner or an experienced developer, you'll find clear explanations, practical examples, and best practices to help you create powerful AI assistants.
+                </p>
+            </div>
+        </header>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <!-- Basic Concepts Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl font-semibold text-gray-800">1.</span>
+                    <h2 class="text-2xl font-semibold text-gray-800 ml-2">Basic Concepts</h2>
+                </div>
+                <p class="text-gray-600 mb-4">Start your journey by learning the fundamentals of LLM agents. You'll learn:</p>
+                <ul class="custom-list mb-4">
+                    <li>What LLM agents are</li>
+                    <li>How to talk to AI models</li>
+                    <li>Managing conversations</li>
+                    <li>Basic error handling</li>
+                </ul>
+                <a href="basic-concepts.html" class="btn btn-primary">Get Started →</a>
+            </div>
+
+            <!-- Tool Usage Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl font-semibold text-gray-800">2.</span>
+                    <h2 class="text-2xl font-semibold text-gray-800 ml-2">Tool Usage</h2>
+                </div>
+                <p class="text-gray-600 mb-4">Give your agent the power to take actions. You'll learn:</p>
+                <ul class="custom-list mb-4">
+                    <li>Creating custom tools</li>
+                    <li>Handling tool calls</li>
+                    <li>Tool safety measures</li>
+                    <li>Parameter validation</li>
+                </ul>
+                <a href="tool-usage.html" class="btn btn-primary">Explore Tools →</a>
+            </div>
+
+            <!-- Advanced Features Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl font-semibold text-gray-800">3.</span>
+                    <h2 class="text-2xl font-semibold text-gray-800 ml-2">Advanced Features</h2>
+                </div>
+                <p class="text-gray-600 mb-4">Take your agent to the next level with advanced capabilities:</p>
+                <ul class="custom-list mb-4">
+                    <li>Error recovery</li>
+                    <li>State management</li>
+                    <li>Memory systems</li>
+                    <li>Performance optimization</li>
+                </ul>
+                <a href="advanced-features.html" class="btn btn-primary">Go Advanced →</a>
+            </div>
+
+            <!-- Environment Interaction Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl font-semibold text-gray-800">4.</span>
+                    <h2 class="text-2xl font-semibold text-gray-800 ml-2">Environment</h2>
+                </div>
+                <p class="text-gray-600 mb-4">Create agents that can navigate and interact with environments:</p>
+                <ul class="custom-list mb-4">
+                    <li>Building game worlds</li>
+                    <li>State tracking</li>
+                    <li>Dynamic tools</li>
+                    <li>Progress management</li>
+                </ul>
+                <a href="environment-interaction.html" class="btn btn-primary">Explore Worlds →</a>
+            </div>
+
+            <!-- Safety & Best Practices Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl font-semibold text-gray-800">5.</span>
+                    <h2 class="text-2xl font-semibold text-gray-800 ml-2">Safety</h2>
+                </div>
+                <p class="text-gray-600 mb-4">Learn essential safety measures and best practices:</p>
+                <ul class="custom-list mb-4">
+                    <li>Input validation</li>
+                    <li>Security measures</li>
+                    <li>Error handling</li>
+                    <li>Best practices</li>
+                </ul>
+                <a href="safety-best-practices.html" class="btn btn-primary">Stay Safe →</a>
+            </div>
+
+            <!-- Examples & Projects Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl font-semibold text-gray-800">6.</span>
+                    <h2 class="text-2xl font-semibold text-gray-800 ml-2">Examples</h2>
+                </div>
+                <p class="text-gray-600 mb-4">See real-world applications and complete projects:</p>
+                <ul class="custom-list mb-4">
+                    <li>Code review agent</li>
+                    <li>Data analysis agent</li>
+                    <li>Support chat agent</li>
+                    <li>Game-playing agent</li>
+                </ul>
+                <a href="examples.html" class="btn btn-primary">See Examples →</a>
+            </div>
+        </div>
+
+        <div class="mt-16 max-w-2xl mx-auto">
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Getting Started</h2>
+                <p class="text-gray-600 mb-4">
+                    Before you begin, make sure you have:
+                </p>
+                <ul class="custom-list mb-6">
+                    <li>Python 3.7 or higher installed</li>
+                    <li>An OpenAI API key</li>
+                    <li>Basic Python programming knowledge</li>
+                    <li>A code editor (like VS Code)</li>
+                </ul>
+                <div class="warning-box">
+                    <p class="text-sm text-gray-600">
+                        <span class="font-semibold">⚠️ Note:</span> Keep your API keys secure and never share them in your code!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>Created with ❤️ by the LLM Agent Development Community</p>
+        </div>
+    </footer>
+</body>
+</html> 

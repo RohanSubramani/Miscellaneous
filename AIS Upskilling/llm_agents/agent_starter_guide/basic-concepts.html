@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Concepts - LLM Agent Development Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/themes/prism-tomorrow.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="index.html" class="flex items-center py-4">
+                            <span class="font-semibold text-gray-500 text-lg">LLM Agent Guide</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <header class="mb-12">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Basic Concepts</h1>
+                <div class="progress-bar mb-4">
+                    <div class="progress-bar-fill" style="width: 16.67%"></div>
+                </div>
+                <p class="text-xl text-gray-600">Understanding the fundamentals of LLM agents and their interactions</p>
+            </header>
+
+            <div class="info-box mb-8">
+                <p class="text-gray-600">
+                    Welcome to the first step in your journey to build LLM agents! This guide will walk you through the basics in a clear, step-by-step manner. Don't worry if some concepts seem complex at first - we'll break everything down into digestible pieces.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">What is an LLM Agent?</h2>
+                <p class="text-gray-600 mb-6">
+                    An LLM Agent is like a smart assistant that uses a Large Language Model (like GPT-4) to understand and respond to your requests. Think of it as a program that can:
+                </p>
+                <ul class="custom-list mb-6">
+                    <li>Have natural conversations with users</li>
+                    <li>Understand and process text inputs</li>
+                    <li>Make decisions based on what you tell it</li>
+                    <li>Take actions using special tools you give it</li>
+                    <li>Remember previous conversations</li>
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Your First LLM Agent</h2>
+                <p class="text-gray-600 mb-6">
+                    Let's look at the simplest possible LLM agent. This example shows how to create a basic conversation with an AI:
+                </p>
+                <pre><code class="language-python">from openai import OpenAI
+import json
+
+# Initialize the OpenAI client
+client = OpenAI()
+
+# Start a conversation
+conversation = []
+
+# User interaction loop
+user_message = input("You: ")
+while user_message.lower() != 'end':
+    # Add the user's message to the conversation
+    conversation.append({"role": "user", "content": user_message})
+
+    # Get assistant's response
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=conversation
+    )
+    assistant_message = response.choices[0].message
+
+    # Print and save the assistant's response
+    print(f"AI: {assistant_message.content}")
+    conversation.append({
+        "role": "assistant",
+        "content": assistant_message.content
+    })
+
+    # Get next user input
+    user_message = input("You: ")</code></pre>
+                <div class="info-box mt-4">
+                    <p class="text-sm text-gray-600">
+                        <span class="font-semibold">💡 Key Point:</span> The conversation is stored in a list where each message has a "role" (user or assistant) and "content" (the actual message).
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Adding Simple Tools</h2>
+                <p class="text-gray-600 mb-6">
+                    The real power of LLM agents comes when we give them tools to interact with the world. Here's a simple example with a toggle switch:
+                </p>
+                <pre><code class="language-python"># Simple environment: a switch that can be on or off
+switch_state = False  # False means 'off', True means 'on'
+
+def toggle_switch():
+    """Toggle the switch on or off."""
+    global switch_state
+    switch_state = not switch_state
+    return {"switch_state": "on" if switch_state else "off"}
+
+# Define the tools available for the assistant
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "toggle_switch",
+            "description": "Toggle the switch on or off.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    }
+]</code></pre>
+                <div class="warning-box mt-4">
+                    <p class="text-sm text-gray-600">
+                        <span class="font-semibold">⚠️ Important:</span> Tools must be defined with clear descriptions and parameter specifications so the AI knows how to use them correctly.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Best Practices for Beginners</h2>
+                <div class="space-y-4">
+                    <div class="info-box">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">1. API Key Safety</h3>
+                        <p class="text-gray-600">Always store your API keys in environment variables, never in your code:</p>
+                        <pre><code class="language-python">import os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))</code></pre>
+                    </div>
+                    <div class="info-box">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">2. Error Handling</h3>
+                        <p class="text-gray-600">Always wrap API calls in try-except blocks:</p>
+                        <pre><code class="language-python">try:
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=conversation
+    )
+except Exception as e:
+    print(f"An error occurred: {e}")</code></pre>
+                    </div>
+                    <div class="info-box">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">3. Clear Documentation</h3>
+                        <p class="text-gray-600">Document your code and tools clearly:</p>
+                        <pre><code class="language-python">def my_tool(param):
+    """
+    Clear description of what the tool does.
+    
+    Args:
+        param: What this parameter is for
+        
+    Returns:
+        What the tool returns
+    """
+    # Tool implementation</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Common Pitfalls to Avoid</h2>
+                <ul class="custom-list">
+                    <li>Don't hardcode sensitive information like API keys</li>
+                    <li>Don't forget to handle API errors and rate limits</li>
+                    <li>Don't make tool descriptions vague or unclear</li>
+                    <li>Don't ignore the conversation history management</li>
+                    <li>Don't skip error handling in your tools</li>
+                </ul>
+            </div>
+
+            <div class="flex justify-between items-center mt-12">
+                <a href="index.html" class="btn btn-primary">← Back to Home</a>
+                <a href="tool-usage.html" class="btn btn-primary">Next: Tool Usage →</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>Created with ❤️ by the LLM Agent Development Community</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/components/prism-python.min.js"></script>
+</body>
+</html> 

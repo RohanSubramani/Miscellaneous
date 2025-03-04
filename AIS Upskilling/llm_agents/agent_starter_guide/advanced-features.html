@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Features - LLM Agent Development Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/themes/prism-tomorrow.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="index.html" class="flex items-center py-4">
+                            <span class="font-semibold text-gray-500 text-lg">LLM Agent Guide</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <header class="mb-12">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Advanced Features</h1>
+                <div class="progress-bar mb-4">
+                    <div class="progress-bar-fill" style="width: 66.66%"></div>
+                </div>
+                <p class="text-xl text-gray-600">Master advanced concepts in LLM agent development</p>
+            </header>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Error Handling</h2>
+                <p class="text-gray-600 mb-6">
+                    Robust error handling is crucial for reliable LLM agents. Here's an example implementation:
+                </p>
+                <pre><code class="language-python">from typing import Optional, Dict, Any
+from enum import Enum
+import traceback
+
+class ErrorType(Enum):
+    TOOL_ERROR = "tool_error"
+    API_ERROR = "api_error"
+    VALIDATION_ERROR = "validation_error"
+    UNKNOWN_ERROR = "unknown_error"
+
+class AgentError(Exception):
+    def __init__(self, error_type: ErrorType, message: str, details: Optional[Dict[str, Any]] = None):
+        self.error_type = error_type
+        self.message = message
+        self.details = details or {}
+        super().__init__(message)
+
+def safe_tool_execution(tool_name: str, tool_fn, **kwargs):
+    """Safely execute a tool with error handling."""
+    try:
+        result = tool_fn(**kwargs)
+        return {
+            "success": True,
+            "result": result
+        }
+    except Exception as e:
+        error_details = {
+            "error_type": ErrorType.TOOL_ERROR.value,
+            "tool_name": tool_name,
+            "traceback": traceback.format_exc(),
+            "args": kwargs
+        }
+        raise AgentError(
+            error_type=ErrorType.TOOL_ERROR,
+            message=f"Tool execution failed: {str(e)}",
+            details=error_details
+        )
+
+def handle_agent_error(error: AgentError, conversation: list) -> None:
+    """Handle agent errors and update conversation accordingly."""
+    error_message = {
+        "role": "system",
+        "content": f"Error occurred: {error.message}\nType: {error.error_type.value}"
+    }
+    conversation.append(error_message)
+    
+    # Add recovery suggestions based on error type
+    recovery_message = {
+        "role": "system",
+        "content": get_recovery_suggestion(error)
+    }
+    conversation.append(recovery_message)</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">State Management</h2>
+                <p class="text-gray-600 mb-6">
+                    Implementing proper state management helps maintain context and track agent progress:
+                </p>
+                <pre><code class="language-python">from dataclasses import dataclass
+from typing import List, Dict, Any
+from enum import Enum
+
+class AgentState(Enum):
+    IDLE = "idle"
+    PROCESSING = "processing"
+    WAITING_FOR_TOOL = "waiting_for_tool"
+    ERROR = "error"
+
+@dataclass
+class AgentContext:
+    conversation_history: List[Dict[str, Any]]
+    current_state: AgentState
+    memory: Dict[str, Any]
+    tool_results: Dict[str, Any]
+    error_count: int = 0
+    max_retries: int = 3
+
+class StateManager:
+    def __init__(self):
+        self.context = AgentContext(
+            conversation_history=[],
+            current_state=AgentState.IDLE,
+            memory={},
+            tool_results={}
+        )
+    
+    def update_state(self, new_state: AgentState) -> None:
+        self.context.current_state = new_state
+    
+    def add_to_memory(self, key: str, value: Any) -> None:
+        self.context.memory[key] = value
+    
+    def get_from_memory(self, key: str) -> Any:
+        return self.context.memory.get(key)
+    
+    def record_tool_result(self, tool_name: str, result: Any) -> None:
+        self.context.tool_results[tool_name] = result
+    
+    def can_retry(self) -> bool:
+        return self.context.error_count < self.context.max_retries
+    
+    def increment_error_count(self) -> None:
+        self.context.error_count += 1</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Advanced Tool Features</h2>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">1. Tool Chaining</h3>
+                        <p class="text-gray-600">Combine multiple tools to perform complex operations:</p>
+                        <pre><code class="language-python">async def chain_tools(tools: List[Dict], inputs: Dict[str, Any]) -> Dict[str, Any]:
+    results = {}
+    for tool in tools:
+        tool_input = {
+            **inputs,
+            **results  # Pass previous results as input
+        }
+        result = await execute_tool(tool["name"], tool_input)
+        results[tool["name"]] = result
+    return results</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">2. Tool Validation</h3>
+                        <p class="text-gray-600">Implement input/output validation for tools:</p>
+                        <pre><code class="language-python">from pydantic import BaseModel, ValidationError
+
+class ToolInput(BaseModel):
+    param1: str
+    param2: int
+
+def validate_tool_input(tool_name: str, input_data: Dict[str, Any]) -> None:
+    try:
+        ToolInput(**input_data)
+    except ValidationError as e:
+        raise AgentError(
+            error_type=ErrorType.VALIDATION_ERROR,
+            message=f"Invalid input for tool {tool_name}",
+            details={"validation_errors": e.errors()}
+        )</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Performance Optimization</h2>
+                <ul class="custom-list">
+                    <li>Implement caching for frequently used tool results</li>
+                    <li>Use async/await for concurrent tool execution</li>
+                    <li>Batch similar operations when possible</li>
+                    <li>Implement rate limiting for API calls</li>
+                    <li>Monitor and log performance metrics</li>
+                </ul>
+                <pre><code class="language-python">from functools import lru_cache
+import asyncio
+import time
+
+@lru_cache(maxsize=100)
+def cached_tool_call(tool_name: str, **kwargs):
+    """Cache tool results for improved performance."""
+    return execute_tool(tool_name, **kwargs)
+
+async def batch_tool_execution(tools: List[Dict]) -> List[Dict]:
+    """Execute multiple tools concurrently."""
+    tasks = [
+        execute_tool_async(tool["name"], tool["args"])
+        for tool in tools
+    ]
+    return await asyncio.gather(*tasks)
+
+class RateLimiter:
+    def __init__(self, calls_per_second: float):
+        self.calls_per_second = calls_per_second
+        self.min_interval = 1.0 / calls_per_second
+        self.last_call = 0.0
+
+    async def wait(self):
+        now = time.time()
+        elapsed = now - self.last_call
+        if elapsed < self.min_interval:
+            await asyncio.sleep(self.min_interval - elapsed)
+        self.last_call = time.time()</code></pre>
+            </div>
+
+            <div class="flex justify-between items-center mt-12">
+                <a href="tool-usage.html" class="btn btn-primary">← Tool Usage</a>
+                <a href="environment-interaction.html" class="btn btn-primary">Next: Environment Interaction →</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>Created with ❤️ by the LLM Agent Development Community</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/components/prism-python.min.js"></script>
+</body>
+</html> 

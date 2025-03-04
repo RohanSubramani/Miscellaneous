@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safety & Best Practices - LLM Agent Development Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/themes/prism-tomorrow.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="index.html" class="flex items-center py-4">
+                            <span class="font-semibold text-gray-500 text-lg">LLM Agent Guide</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <header class="mb-12">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Safety & Best Practices</h1>
+                <div class="progress-bar mb-4">
+                    <div class="progress-bar-fill" style="width: 100%"></div>
+                </div>
+                <p class="text-xl text-gray-600">Essential safety measures and best practices for LLM agent development</p>
+            </header>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Security Considerations</h2>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">1. API Key Management</h3>
+                        <p class="text-gray-600 mb-4">Implement secure API key handling:</p>
+                        <pre><code class="language-python">import os
+from dotenv import load_dotenv
+from functools import wraps
+
+# Load environment variables
+load_dotenv()
+
+def require_api_key(func):
+    """Decorator to ensure API key is present."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise SecurityError(
+                "API key not found. Please set OPENAI_API_KEY environment variable."
+            )
+        return func(*args, **kwargs)
+    return wrapper
+
+@require_api_key
+def initialize_llm_client():
+    """Safely initialize the LLM client."""
+    return OpenAI()</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">2. Input Validation</h3>
+                        <p class="text-gray-600 mb-4">Implement thorough input validation:</p>
+                        <pre><code class="language-python">from typing import Any, Dict
+from pydantic import BaseModel, validator
+
+class SafeUserInput(BaseModel):
+    """Validate and sanitize user input."""
+    content: str
+    max_length: int = 1000
+    
+    @validator("content")
+    def validate_content(cls, v):
+        # Remove potentially harmful characters
+        v = v.replace("<script>", "").replace("</script>", "")
+        
+        # Check length
+        if len(v) > cls.max_length:
+            raise ValueError(f"Input exceeds maximum length of {cls.max_length}")
+        
+        return v
+
+def process_user_input(raw_input: str) -> Dict[str, Any]:
+    """Safely process user input."""
+    try:
+        validated_input = SafeUserInput(content=raw_input)
+        return {"content": validated_input.content}
+    except ValueError as e:
+        return {"error": str(e)}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Tool Safety</h2>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">1. Tool Access Control</h3>
+                        <p class="text-gray-600 mb-4">Implement tool access control and validation:</p>
+                        <pre><code class="language-python">from enum import Enum
+from typing import List, Set
+
+class ToolPermission(Enum):
+    READ = "read"
+    WRITE = "write"
+    EXECUTE = "execute"
+
+class Tool:
+    def __init__(self, name: str, required_permissions: Set[ToolPermission]):
+        self.name = name
+        self.required_permissions = required_permissions
+
+class ToolRegistry:
+    def __init__(self):
+        self.tools = {}
+        self.user_permissions = {}
+    
+    def register_tool(self, tool: Tool) -> None:
+        """Register a new tool with required permissions."""
+        self.tools[tool.name] = tool
+    
+    def grant_permission(self, user_id: str, 
+                        tool_name: str, 
+                        permission: ToolPermission) -> None:
+        """Grant a specific permission to a user for a tool."""
+        if user_id not in self.user_permissions:
+            self.user_permissions[user_id] = {}
+        if tool_name not in self.user_permissions[user_id]:
+            self.user_permissions[user_id][tool_name] = set()
+        self.user_permissions[user_id][tool_name].add(permission)
+    
+    def check_permissions(self, user_id: str, 
+                         tool_name: str) -> bool:
+        """Check if user has required permissions for a tool."""
+        if tool_name not in self.tools:
+            return False
+        
+        tool = self.tools[tool_name]
+        user_tool_permissions = self.user_permissions.get(user_id, {}).get(tool_name, set())
+        return tool.required_permissions.issubset(user_tool_permissions)</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">2. Safe Tool Execution</h3>
+                        <p class="text-gray-600 mb-4">Implement safe tool execution with timeouts and resource limits:</p>
+                        <pre><code class="language-python">import signal
+from contextlib import contextmanager
+import resource
+
+class TimeoutError(Exception):
+    pass
+
+@contextmanager
+def time_limit(seconds: int):
+    """Context manager for timing out operations."""
+    def signal_handler(signum, frame):
+        raise TimeoutError("Operation timed out")
+    
+    # Set the signal handler and alarm
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        # Disable the alarm
+        signal.alarm(0)
+
+def set_resource_limits():
+    """Set resource limits for safe execution."""
+    # Limit memory usage (1GB)
+    resource.setrlimit(resource.RLIMIT_AS, (1024 * 1024 * 1024, -1))
+    # Limit CPU time (30 seconds)
+    resource.setrlimit(resource.RLIMIT_CPU, (30, -1))
+
+def safe_execute_tool(tool_fn, **kwargs):
+    """Execute a tool with safety measures."""
+    try:
+        with time_limit(30):  # 30 second timeout
+            set_resource_limits()
+            result = tool_fn(**kwargs)
+            return {"success": True, "result": result}
+    except TimeoutError:
+        return {
+            "success": False,
+            "error": "Tool execution timed out"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Best Practices</h2>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Development Guidelines</h3>
+                        <ul class="custom-list">
+                            <li>Always implement proper error handling and logging</li>
+                            <li>Use type hints and documentation for better code maintainability</li>
+                            <li>Implement rate limiting for API calls</li>
+                            <li>Use environment variables for configuration</li>
+                            <li>Implement proper testing and validation</li>
+                            <li>Monitor agent behavior and performance</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Security Guidelines</h3>
+                        <ul class="custom-list">
+                            <li>Never expose API keys or sensitive information</li>
+                            <li>Implement proper authentication and authorization</li>
+                            <li>Validate and sanitize all inputs</li>
+                            <li>Limit tool capabilities and access</li>
+                            <li>Implement proper logging and monitoring</li>
+                            <li>Regular security audits and updates</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Monitoring and Maintenance</h3>
+                        <pre><code class="language-python">import logging
+from datetime import datetime
+from typing import Dict, Any
+
+class AgentMonitor:
+    def __init__(self):
+        self.logger = logging.getLogger("agent_monitor")
+        self.logger.setLevel(logging.INFO)
+        
+        # Add file handler
+        fh = logging.FileHandler("agent_monitor.log")
+        fh.setLevel(logging.INFO)
+        self.logger.addHandler(fh)
+        
+        self.metrics = {
+            "total_actions": 0,
+            "successful_actions": 0,
+            "failed_actions": 0,
+            "average_response_time": 0.0
+        }
+    
+    def log_action(self, action_type: str, 
+                   details: Dict[str, Any], 
+                   success: bool,
+                   response_time: float) -> None:
+        """Log agent actions and update metrics."""
+        self.metrics["total_actions"] += 1
+        if success:
+            self.metrics["successful_actions"] += 1
+        else:
+            self.metrics["failed_actions"] += 1
+        
+        # Update average response time
+        total_time = (self.metrics["average_response_time"] * 
+                     (self.metrics["total_actions"] - 1) + 
+                     response_time)
+        self.metrics["average_response_time"] = (
+            total_time / self.metrics["total_actions"]
+        )
+        
+        # Log the action
+        self.logger.info(
+            f"Action: {action_type}, Success: {success}, "
+            f"Time: {response_time:.2f}s, Details: {details}"
+        )
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get current metrics."""
+        return {
+            **self.metrics,
+            "success_rate": (
+                self.metrics["successful_actions"] / 
+                self.metrics["total_actions"]
+                if self.metrics["total_actions"] > 0 else 0
+            )
+        }</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-12">
+                <a href="environment-interaction.html" class="btn btn-primary">← Environment Interaction</a>
+                <a href="index.html" class="btn btn-primary">Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>Created with ❤️ by the LLM Agent Development Community</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/components/prism-python.min.js"></script>
+</body>
+</html> 
