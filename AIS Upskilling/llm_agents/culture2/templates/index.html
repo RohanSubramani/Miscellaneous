@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Society</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-circle {
+            animation: spin 1s linear infinite;
+        }
+        .agent-thinking {
+            border-color: #6366f1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Agents Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <script>
+                const AGENT_NAMES = {{ agent_names|tojson|safe }};
+                AGENT_NAMES.forEach((name, index) => {
+                    document.write(`
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h1 class="text-2xl font-bold">${name}</h1>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-gray-600">Name:</span>
+                                    <input type="text" id="agent${index + 1}Name" value="${name}" 
+                                           class="border rounded px-2 py-1 text-sm">
+                                    <button onclick="updateName(${index + 1})" 
+                                            class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                                        Update
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-gray-600 mb-4">
+                                Current location: <span id="agent${index + 1}Location" class="font-medium"></span>
+                            </div>
+                            <div class="flex space-x-4 mb-6">
+                                <button onclick="step(${index + 1})" 
+                                        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center space-x-2">
+                                    <span>Next step</span>
+                                    <div id="loading${index + 1}" class="hidden">
+                                        <svg class="w-5 h-5 loading-circle" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                        </svg>
+                                    </div>
+                                </button>
+                                <div class="flex-1 flex space-x-2">
+                                    <input type="text" id="agent${index + 1}Prompt" placeholder="Enter your message..." 
+                                           class="flex-1 border rounded px-3 py-2"
+                                           onkeypress="if(event.key === 'Enter') sendPrompt(${index + 1})">
+                                    <button onclick="sendPrompt(${index + 1})" 
+                                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="conversation${index + 1}" class="space-y-4 max-h-96 overflow-y-auto"></div>
+                        </div>
+                    `);
+                });
+            </script>
+        </div>
+
+        <!-- Locations Grid -->
+        <h2 class="text-2xl font-bold mb-4">Locations</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="locations">
+            <script>
+                // Add public locations
+                document.write(`
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold mb-4">Park</h3>
+                        <div id="location-Park" class="space-y-2"></div>
+                    </div>
+                `);
+
+                // Add homes for each agent
+                AGENT_NAMES.forEach(name => {
+                    document.write(`
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <h3 class="text-xl font-bold mb-4">${name}'s Home</h3>
+                            <div id="location-${name}'s Home" class="space-y-2"></div>
+                        </div>
+                    `);
+                });
+            </script>
+        </div>
+    </div>
+
+    <script>
+        let thinkingAgents = new Set();
+
+        async function step(agentNum) {
+            setThinking(agentNum, true);
+            
+            try {
+                const response = await fetch(`/step/${agentNum}`);
+                const result = await response.json();
+                addToConversation(agentNum, result);
+                updateLocation(agentNum);
+                updateLocations();
+            } finally {
+                setThinking(agentNum, false);
+            }
+        }
+
+        async function sendPrompt(agentNum) {
+            const prompt = document.getElementById(`agent${agentNum}Prompt`).value;
+            if (!prompt.trim()) return;
+
+            setThinking(agentNum, true);
+            
+            try {
+                const response = await fetch(`/prompt/${agentNum}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+                const result = await response.json();
+                
+                addToConversation(agentNum, {
+                    type: "user",
+                    content: prompt
+                });
+                
+                addToConversation(agentNum, result);
+                updateLocation(agentNum);
+                updateLocations();
+                
+                document.getElementById(`agent${agentNum}Prompt`).value = '';
+            } finally {
+                setThinking(agentNum, false);
+            }
+        }
+
+        function setThinking(agentNum, isThinking) {
+            const loadingDiv = document.getElementById(`loading${agentNum}`);
+            if (isThinking) {
+                loadingDiv.classList.remove('hidden');
+                thinkingAgents.add(agentNum);
+            } else {
+                loadingDiv.classList.add('hidden');
+                thinkingAgents.delete(agentNum);
+            }
+        }
+
+        async function updateName(agentNum) {
+            const name = document.getElementById(`agent${agentNum}Name`).value;
+            await fetch(`/update_name/${agentNum}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name })
+            });
+            updateLocations();
+        }
+
+        async function updateLocation(agentNum) {
+            const response = await fetch(`/location/${agentNum}`);
+            const data = await response.json();
+            document.getElementById(`agent${agentNum}Location`).textContent = data.location;
+        }
+
+        async function updateLocations() {
+            const response = await fetch('/locations');
+            const locations = await response.json();
+            
+            // Update each location's agent list
+            for (const [location, agents] of Object.entries(locations)) {
+                const container = document.getElementById(`location-${location}`);
+                if (container) {
+                    container.innerHTML = agents.map(agent => `
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full ${thinkingAgents.has(AGENT_NAMES.indexOf(agent) + 1) ? 'bg-indigo-500 animate-pulse' : 'bg-green-500'}"></div>
+                            <span>${agent}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+
+        function addToConversation(agentNum, message) {
+            const conversation = document.getElementById(`conversation${agentNum}`);
+            const entry = document.createElement('div');
+            
+            if (message.type === "user") {
+                entry.className = 'bg-blue-50 p-3 rounded-lg';
+                entry.innerHTML = `<div class="font-medium text-blue-600">You:</div>
+                                 <div>${message.content}</div>`;
+            } else if (message.type === "success") {
+                entry.className = 'bg-green-50 p-3 rounded-lg';
+                entry.innerHTML = `<div class="font-medium text-green-600">Agent:</div>
+                                 ${message.content.thought ? 
+                                   `<div class="mb-2">${message.content.thought}</div>` : ''}
+                                 <div class="text-gray-600 ${message.content.thought ? 'border-t pt-2' : ''}">${message.content.result}</div>`;
+            } else {
+                entry.className = 'bg-red-50 p-3 rounded-lg';
+                entry.innerHTML = `<div class="font-medium text-red-600">Error:</div>
+                                 <div>${message.content}</div>`;
+            }
+            
+            conversation.insertBefore(entry, conversation.firstChild);
+        }
+
+        // Initialize locations
+        AGENT_NAMES.forEach((_, i) => updateLocation(i + 1));
+        updateLocations();
+        
+        // Update locations periodically
+        setInterval(updateLocations, 1000);
+    </script>
+</body>
+</html> 
