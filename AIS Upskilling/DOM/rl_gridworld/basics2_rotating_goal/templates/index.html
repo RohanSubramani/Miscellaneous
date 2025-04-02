@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2x2 Gridworld</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+        }
+
+        h2, h3 {
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 120px);
+            gap: 8px;
+            margin: 20px auto;
+            width: 248px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .cell {
+            width: 120px;
+            height: 120px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            position: relative;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .agent {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: #e74c3c;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .info {
+            text-align: center;
+            margin: 20px auto;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .goal {
+            background-color: #a8e6cf;
+            border-color: #69d1a7;
+        }
+
+        .penalty {
+            background-color: #ffd3d3;
+            border-color: #ffb1b1;
+        }
+
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 30px auto;
+            max-width: 1200px;
+        }
+
+        .left-panel {
+            flex-shrink: 0;
+        }
+
+        .training-panel {
+            width: 250px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .training-panel input {
+            width: calc(100% - 16px);
+            margin: 6px 0;
+            padding: 6px;
+            border: 2px solid #e0e6ed;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .training-panel input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .training-panel label {
+            display: block;
+            margin-top: 10px;
+            color: #34495e;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .q-tables-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 0 20px;
+            max-width: 750px;
+            margin: 0;
+        }
+
+        .q-table {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .q-table h3 {
+            font-size: 1em;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        .q-table-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            justify-items: center;
+        }
+
+        .q-cell {
+            margin: 5px;
+            padding: 10px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            text-align: left;
+            background: #f8fafc;
+            font-size: 1em;
+            width: 150px;
+        }
+
+        .q-cell strong {
+            display: inline-block;
+            margin-bottom: 4px;
+            color: #34495e;
+            font-size: 1.1em;
+        }
+
+        .arrow {
+            display: inline-block;
+            margin: 0 4px;
+            font-size: 15px;
+            width: 18px;
+            text-align: center;
+        }
+
+        .best-action {
+            font-weight: 600;
+            color: #27ae60;
+        }
+
+        .action-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 3px 0;
+            padding: 3px 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+            font-size: 1em;
+        }
+
+        .action-info:hover {
+            background-color: #f0f4f8;
+        }
+
+        .action-count {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-family: monospace;
+            background: #f5f7fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 6px;
+        }
+
+        #reward {
+            font-weight: 600;
+            color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h2>2x2 Gridworld with Rotating Goal</h2>
+        <p>Use arrow keys to move. Reach the goal (green) while avoiding penalties (pink)!</p>
+        <p>The goal and penalty states rotate when goal is reached.</p>
+        <p>Total Reward: <span id="reward">0</span></p>
+        <button onclick="resetGame()">Reset Game</button>
+    </div>
+    
+    <div class="grid">
+        <div class="cell" id="0,0">0</div>
+        <div class="cell" id="0,1">0</div>
+        <div class="cell" id="1,0">0</div>
+        <div class="cell" id="1,1">0</div>
+    </div>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="training-panel">
+                <h3>Training Controls</h3>
+                <div>
+                    <label>Number of Steps:</label>
+                    <input type="number" id="num_episodes" value="1000">
+                </div>
+                <div>
+                    <label>Learning Rate:</label>
+                    <input type="number" id="learning_rate" value="0.1" step="0.1" min="0" max="1">
+                </div>
+                <div>
+                    <label>Discount Factor:</label>
+                    <input type="number" id="discount_factor" value="0.9" step="0.1" min="0" max="1">
+                </div>
+                <div>
+                    <label>Epsilon (Exploration):</label>
+                    <input type="number" id="epsilon" value="0.1" step="0.1" min="0" max="1">
+                </div>
+                <div>
+                    <label>Optimistic Init Value:</label>
+                    <input type="number" id="optimistic_value" value="2.0" step="0.5">
+                </div>
+                <button onclick="trainAgent()">Train Agent</button>
+            </div>
+        </div>
+
+        <div id="q_table"></div>
+    </div>
+
+    <script>
+        let currentState = [0, 0];
+        let totalReward = 0;
+        let agent = document.createElement('div');
+        agent.className = 'agent';
+
+        function updateAgentPosition() {
+            const cell = document.getElementById(`${currentState[0]},${currentState[1]}`);
+            cell.appendChild(agent);
+        }
+
+        function updateGridColors(goalState, penaltyState) {
+            // Reset all cells
+            for (let i = 0; i < 2; i++) {
+                for (let j = 0; j < 2; j++) {
+                    const cell = document.getElementById(`${i},${j}`);
+                    cell.className = 'cell';
+                    // Set default reward text
+                    cell.textContent = '0';
+                }
+            }
+            
+            // Set goal and penalty states with their rewards
+            const goalCell = document.getElementById(`${goalState[0]},${goalState[1]}`);
+            goalCell.className = 'cell goal';
+            goalCell.textContent = '+1';
+
+            const penaltyCell = document.getElementById(`${penaltyState[0]},${penaltyState[1]}`);
+            penaltyCell.className = 'cell penalty';
+            penaltyCell.textContent = '-2';
+        }
+
+        function resetGame() {
+            fetch('/reset', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    currentState = data.state;
+                    totalReward = 0;
+                    document.getElementById('reward').textContent = totalReward;
+                    updateGridColors(data.goal_state, data.penalty_state);
+                    updateAgentPosition();
+                });
+        }
+
+        function makeMove(action) {
+            fetch(`/step/${action}`)
+                .then(response => response.json())
+                .then(data => {
+                    currentState = data.state;
+                    totalReward += data.reward;
+                    document.getElementById('reward').textContent = totalReward;
+                    updateGridColors(data.goal_state, data.penalty_state);
+                    updateAgentPosition();
+                    if (data.goal_reached) {
+                        console.log('Goal reached! States rotating...');
+                    }
+                });
+        }
+
+        function trainAgent() {
+            const params = {
+                num_episodes: parseInt(document.getElementById('num_episodes').value),
+                learning_rate: parseFloat(document.getElementById('learning_rate').value),
+                discount_factor: parseFloat(document.getElementById('discount_factor').value),
+                epsilon: parseFloat(document.getElementById('epsilon').value),
+                optimistic_value: parseFloat(document.getElementById('optimistic_value').value)
+            };
+
+            fetch('/train', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params)
+            })
+            .then(response => response.json())
+            .then(data => {
+                visualizeAllQTables(data.q_tables);
+                console.log('Training rewards per step:', data.rewards);
+            });
+        }
+
+        function visualizeAllQTables(qTables) {
+            const container = document.getElementById('q_table');
+            container.innerHTML = '';
+            
+            // Create container for all Q-tables
+            const tablesContainer = document.createElement('div');
+            tablesContainer.className = 'q-tables-container';
+            
+            // Define stages and their labels
+            const stages = [
+                ['initial', 'Initial Q-Table (Optimistic)'],
+                ['one_third', 'After 1/3 of Training'],
+                ['two_thirds', 'After 2/3 of Training'],
+                ['final', 'Final Q-Table']
+            ];
+            
+            // Create each Q-table
+            stages.forEach(([stage, label]) => {
+                const qTableDiv = document.createElement('div');
+                qTableDiv.className = 'q-table';
+                qTableDiv.innerHTML = `<h3>${label}</h3>`;
+                
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'q-table-grid';
+                
+                for (let i = 0; i < 2; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        const state = `(${i},${j})`;
+                        const stateKey = `${i},${j}`;
+                        const stateValues = qTables[stage]?.q_values?.[stateKey] || {};
+                        const actionCounts = qTables[stage]?.action_counts?.[stateKey] || {};
+                        const bestAction = Object.entries(stateValues).reduce((a, b) => 
+                            (b[1] > a[1] ? b : a), ['', -Infinity])[0];
+                        
+                        const cell = document.createElement('div');
+                        cell.className = 'q-cell';
+                        cell.innerHTML = `
+                            <strong>${state}</strong><br>
+                            ${Object.entries(stateValues).map(([action, value]) => `
+                                <div class="action-info ${action === bestAction ? 'best-action' : ''}">
+                                    <div>
+                                        <span class="arrow">${getArrow(action)}</span>
+                                        ${value.toFixed(2)}
+                                    </div>
+                                    <span class="action-count">(${actionCounts[action] || 0})</span>
+                                </div>
+                            `).join('')}
+                        `;
+                        gridDiv.appendChild(cell);
+                    }
+                }
+                
+                qTableDiv.appendChild(gridDiv);
+                tablesContainer.appendChild(qTableDiv);
+            });
+            
+            container.appendChild(tablesContainer);
+        }
+
+        function getArrow(action) {
+            const arrows = {
+                'up': '↑',
+                'down': '↓',
+                'left': '←',
+                'right': '→'
+            };
+            return arrows[action] || action;
+        }
+
+        document.addEventListener('keydown', (event) => {
+            const keyActions = {
+                'ArrowUp': 'up',
+                'ArrowDown': 'down',
+                'ArrowLeft': 'left',
+                'ArrowRight': 'right'
+            };
+            
+            if (keyActions[event.key]) {
+                event.preventDefault();
+                makeMove(keyActions[event.key]);
+            }
+        });
+
+        // Initialize the game
+        resetGame();
+    </script>
+</body>
+</html> 
