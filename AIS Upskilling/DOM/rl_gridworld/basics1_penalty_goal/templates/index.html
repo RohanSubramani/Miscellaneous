@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2x2 Gridworld</title>
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 100px);
+            gap: 2px;
+            margin: 20px auto;
+            width: 202px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            border: 1px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            position: relative;
+        }
+        .agent {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+        }
+        .info {
+            text-align: center;
+            margin: 20px;
+        }
+        .goal {
+            background-color: lightgreen;
+        }
+        .penalty {
+            background-color: pink;
+        }
+        .neutral {
+            background-color: #f0f0f0;
+        }
+        .training-panel {
+            width: 300px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .training-panel input {
+            width: 100%;
+            margin: 5px 0;
+        }
+        .q-tables-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+        .q-table {
+            margin: 10px;
+            text-align: center;
+            min-width: 45%;
+        }
+        .q-cell {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            text-align: left;
+        }
+        .arrow {
+            display: inline-block;
+            margin: 0 5px;
+        }
+        .best-action {
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h2>2x2 Gridworld</h2>
+        <p>Use arrow keys to move. Reach the bottom right (goal) to win!</p>
+        <p>Total Reward: <span id="reward">0</span></p>
+        <button onclick="resetGame()">Reset Game</button>
+    </div>
+    
+    <div class="grid">
+        <div class="cell" id="0,0">Start</div>
+        <div class="cell penalty" id="0,1">-2</div>
+        <div class="cell neutral" id="1,0">0</div>
+        <div class="cell goal" id="1,1">Goal</div>
+    </div>
+
+    <div class="training-panel">
+        <h3>Training Controls</h3>
+        <div>
+            <label>Number of Episodes:</label>
+            <input type="number" id="num_episodes" value="1000">
+        </div>
+        <div>
+            <label>Learning Rate:</label>
+            <input type="number" id="learning_rate" value="0.1" step="0.1" min="0" max="1">
+        </div>
+        <div>
+            <label>Discount Factor:</label>
+            <input type="number" id="discount_factor" value="0.9" step="0.1" min="0" max="1">
+        </div>
+        <div>
+            <label>Epsilon (Exploration):</label>
+            <input type="number" id="epsilon" value="0.1" step="0.1" min="0" max="1">
+        </div>
+        <button onclick="trainAgent()">Train Agent</button>
+    </div>
+
+    <div class="q-tables-container" id="q_table"></div>
+
+    <script>
+        let currentState = [0, 0];
+        let totalReward = 0;
+        let agent = document.createElement('div');
+        agent.className = 'agent';
+
+        function updateAgentPosition() {
+            const cell = document.getElementById(`${currentState[0]},${currentState[1]}`);
+            cell.appendChild(agent);
+        }
+
+        function resetGame() {
+            fetch('/reset', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    currentState = data.state;
+                    totalReward = 0;
+                    document.getElementById('reward').textContent = totalReward;
+                    updateAgentPosition();
+                });
+        }
+
+        function makeMove(action) {
+            fetch(`/step/${action}`)
+                .then(response => response.json())
+                .then(data => {
+                    currentState = data.state;
+                    totalReward += data.reward;
+                    document.getElementById('reward').textContent = totalReward;
+                    updateAgentPosition();
+                    if (data.done) {
+                        alert(`Goal reached! Final reward: ${totalReward}`);
+                    }
+                });
+        }
+
+        function trainAgent() {
+            const params = {
+                num_episodes: parseInt(document.getElementById('num_episodes').value),
+                learning_rate: parseFloat(document.getElementById('learning_rate').value),
+                discount_factor: parseFloat(document.getElementById('discount_factor').value),
+                epsilon: parseFloat(document.getElementById('epsilon').value)
+            };
+
+            fetch('/train', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params)
+            })
+            .then(response => response.json())
+            .then(data => {
+                visualizeAllQTables(data.q_tables);
+                console.log('Training rewards:', data.episode_rewards);
+            });
+        }
+
+        function visualizeAllQTables(qTables) {
+            const container = document.getElementById('q_table');
+            container.innerHTML = '';
+            
+            // Create container for all Q-tables
+            const tablesContainer = document.createElement('div');
+            tablesContainer.className = 'q-tables-container';
+            
+            // Define stages and their labels
+            const stages = [
+                ['initial', 'Initial Q-Table (Optimistic)'],
+                ['one_third', 'After 1/3 of Training'],
+                ['two_thirds', 'After 2/3 of Training'],
+                ['final', 'Final Q-Table']
+            ];
+            
+            // Create each Q-table
+            stages.forEach(([stage, label]) => {
+                const qTableDiv = document.createElement('div');
+                qTableDiv.className = 'q-table';
+                qTableDiv.innerHTML = `<h3>${label}</h3>`;
+                
+                for (let i = 0; i < 2; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        const state = `(${i},${j})`;
+                        const stateKey = `${i},${j}`;
+                        const stateValues = qTables[stage][stateKey] || {};
+                        const bestAction = Object.entries(stateValues).reduce((a, b) => 
+                            (b[1] > a[1] ? b : a), ['', -Infinity])[0];
+                        
+                        const cell = document.createElement('div');
+                        cell.className = 'q-cell';
+                        cell.innerHTML = `
+                            <strong>${state}</strong><br>
+                            ${Object.entries(stateValues).map(([action, value]) => `
+                                <div class="${action === bestAction ? 'best-action' : ''}">
+                                    <span class="arrow">${getArrow(action)}</span>
+                                    ${value.toFixed(2)}
+                                </div>
+                            `).join('')}
+                        `;
+                        qTableDiv.appendChild(cell);
+                    }
+                    qTableDiv.appendChild(document.createElement('br'));
+                }
+                
+                tablesContainer.appendChild(qTableDiv);
+            });
+            
+            container.appendChild(tablesContainer);
+        }
+
+        function getArrow(action) {
+            const arrows = {
+                'up': '↑',
+                'down': '↓',
+                'left': '←',
+                'right': '→'
+            };
+            return arrows[action] || action;
+        }
+
+        document.addEventListener('keydown', (event) => {
+            const keyActions = {
+                'ArrowUp': 'up',
+                'ArrowDown': 'down',
+                'ArrowLeft': 'left',
+                'ArrowRight': 'right'
+            };
+            
+            if (keyActions[event.key]) {
+                event.preventDefault();
+                makeMove(keyActions[event.key]);
+            }
+        });
+
+        // Initialize the game
+        resetGame();
+    </script>
+</body>
+</html> 
