@@ -1,6 +1,6 @@
 # Basic 2x2 Gridworld with Q-Learning
 
-Written by Claude.
+This readme was written by Claude.
 
 A simple 2x2 gridworld environment where an agent learns to navigate to a fixed goal while avoiding a fixed penalty state.
 
