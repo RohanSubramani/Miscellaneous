@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Education Agent</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Education Agent</h1>
+        </header>
+        
+        <main>
+            <div id="chat-container"></div>
+            
+            <div class="input-container">
+                <input type="text" id="message-input" placeholder="Type your message here...">
+                <button id="send-button" onclick="sendMessage()">Send</button>
+            </div>
+            
+            <div id="status"></div>
+        </main>
+    </div>
+
+    <script>
+        let conversationId = Date.now().toString();
+        let isProcessing = false;
+
+        function setStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = isError ? 'status error' : 'status';
+        }
+
+        function setLoading(isLoading) {
+            const button = document.getElementById('send-button');
+            const input = document.getElementById('message-input');
+            button.disabled = isLoading;
+            input.disabled = isLoading;
+            isProcessing = isLoading;
+            
+            if (isLoading) {
+                button.innerHTML = 'Sending...';
+            } else {
+                button.innerHTML = 'Send';
+            }
+        }
+
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            
+            // Check if this is a continue response (contains both explanation and option)
+            if (text.includes('explanation') && text.includes('option')) {
+                messageDiv.className = 'continue-response';
+                // Format the JSON nicely
+                try {
+                    const jsonObj = JSON.parse(text);
+                    text = JSON.stringify(jsonObj, null, 2);
+                } catch (e) {
+                    // If not valid JSON, just use the text as is
+                }
+            } else {
+                messageDiv.className = `message ${sender}-message`;
+            }
+            
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function sendMessage() {
+            if (isProcessing) return;
+            
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            setLoading(true);
+            setStatus('Processing...');
+
+            // Send message to server
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    conversation_id: conversationId
+                }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Add assistant response to chat
+                addMessage(data.response, 'assistant');
+                setStatus('');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessage(`Error: ${error.message}`, 'error');
+                setStatus('Error occurred. Please try again.', true);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+        }
+
+        // Allow sending message with Enter key
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !isProcessing) {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html> 
