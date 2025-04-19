@@ -34,6 +34,15 @@ This folder contains code to have LLMs provide detailed knowledge graphs to teac
    python education_agent.py
    ```
 
+4. Serve the HTML interface (the HTML must be accessed through a web server, not opened directly):
+   ```bash
+   # Using Python's built-in server
+   python -m http.server
+   # Then visit http://localhost:8000/graph.html
+   
+   # Or using any other web server of your choice
+   ```
+
 ## Usage
 
 ### Creating and Managing Graphs
