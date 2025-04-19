@@ -1,0 +1,396 @@
+{
+  "nodes": [
+    {
+      "id": "Galois Theory: Overview and Dependency Graph",
+      "label": "Galois Theory: Overview and Dependency Graph",
+      "explanation": "Galois theory is a branch of abstract algebra that studies the relationship between field extensions and group theory, especially focusing on the solvability of polynomial equations by radicals. The core insight is the correspondence between subfields of a given field extension and subgroups of its Galois group. A strong understanding of Galois theory equips one to answer questions about the roots of polynomials, constructible numbers, the impossibility of certain angle trisections, and which equations can be solved by radicals.\n\n**Central Example:**\nSuppose K = Q(\u221a2, \u221a3), the field obtained by adjoining both \u221a2 and \u221a3 to the rationals Q. What is the Galois group of K over Q, and how do its subgroups correspond to intermediate fields?\n\n**Solution:**\nFirst, note that K is a splitting field of (x^2-2)(x^2-3) over Q and thus is a Galois extension of Q. The automorphisms of K are determined completely by their action on \u221a2 and \u221a3, and each can send \u221a2 to \u00b1\u221a2 and \u221a3 to \u00b1\u221a3 independently, since both minimal polynomials remain satisfied, and K contains all these combinations. Thus, the Galois group is isomorphic to C2 \u00d7 C2 (the Klein 4-group), having four automorphisms.\n\nThe correspondence:\n- The subgroups of the Galois group (there are five, including the trivial group and the whole group)\n- The intermediate fields between Q and K\n\nFor more advanced examples, such as why x^5-4x+2=0 cannot be solved by radicals, the structure and order of the Galois group become essential.\n\nDependencies include fields, field extensions, polynomial rings, splitting fields, automorphisms, Galois extensions, and group theory concepts such as normal subgroups and group actions.\n\n**Suggested Review Graph** (will be built as dependencies):\n- Fields and Field Extensions\n- Polynomial Rings and Irreducibility\n- Splitting Fields and Algebraic Closures\n- Automorphisms of Fields\n- Normal and Separable Extensions\n- Galois Extensions and the Fundamental Theorem of Galois Theory\n- Solvability by Radicals and Simple Groups\n- Classic Applications (Constructible Numbers, Insolvability of the Quintic, etc.)\n- Connections to Group Theory: Symmetric Groups, Normal Subgroups, Group Actions, Orbit-Stabilizer, etc.",
+      "dependencies": [
+        "Fields and Field Extensions",
+        "Polynomial Rings and Irreducibility",
+        "Splitting Fields and Algebraic Closures",
+        "Automorphisms of Fields",
+        "Normal and Separable Extensions",
+        "Galois Extensions and the Fundamental Theorem of Galois Theory",
+        "Solvability by Radicals and Simple Groups",
+        "Classic Applications of Galois Theory",
+        "Connections to Group Theory"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Fields and Field Extensions",
+      "label": "Fields and Field Extensions",
+      "explanation": "A field is a set equipped with two operations (addition and multiplication) satisfying familiar properties (associativity, commutativity, distributivity, existence of identity and inverses, etc.) Examples include the rational numbers Q, real numbers R, and finite fields F_p. \n\nA field extension K/F is a larger field K containing a subfield F. One is often interested in how elements of K relate algebraically to F, especially when K is constructed by adjoining roots of polynomials with coefficients in F. The degree [K:F] is the dimension of K as a vector space over F.\n\nExample: Q(\u221a2) is a field extension of Q, consisting of all expressions a+b\u221a2 for a, b in Q. Its degree over Q is 2.\n\nCommon constructions include: adjoining a root (F(\u03b1)), finite extensions, algebraic and transcendental extensions, and simple extensions.",
+      "dependencies": [
+        "Field Definition",
+        "Field Extension Definition"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph",
+        "Splitting Fields and Algebraic Closures",
+        "Automorphisms of Fields",
+        "Normal and Separable Extensions"
+      ]
+    },
+    {
+      "id": "Field Definition",
+      "label": "Field Definition",
+      "explanation": "A field is a set F with two operations, addition (+) and multiplication (\u00b7), satisfying:\n1. (F, +) is an abelian group (0 is additive identity, every element has an additive inverse, associativity and commutativity hold).\n2. (F \\ {0}, \u00b7) is an abelian group (1 is multiplicative identity, every nonzero element has a multiplicative inverse, associativity and commutativity hold).\n3. Distributive Law: For all a,b,c\u2208F, a\u00b7(b+c)=a\u00b7b+a\u00b7c.\nCommon examples: Q, R, C, finite fields F_p (p prime).",
+      "dependencies": [],
+      "relevant_for": [
+        "Fields and Field Extensions",
+        "Field Extension Definition",
+        "Polynomial Rings",
+        "Group Automorphism"
+      ]
+    },
+    {
+      "id": "Field Extension Definition",
+      "label": "Field Extension Definition",
+      "explanation": "Given a field F, a field extension is a larger field K containing F as a subfield. This means the inclusion map F\u2192K is injective, and the arithmetic structure of F is preserved within K. Extensions can be finite or infinite degree, algebraic (every element of K is a root of some nonzero polynomial in F[x]) or transcendental (K contains elements not algebraic over F).\n\nExample: Q \u2286 Q(\u221a2), where Q(\u221a2) = {a+b\u221a2 | a, b \u2208 Q}.",
+      "dependencies": [
+        "Field Definition"
+      ],
+      "relevant_for": [
+        "Fields and Field Extensions"
+      ]
+    },
+    {
+      "id": "Polynomial Rings and Irreducibility",
+      "label": "Polynomial Rings and Irreducibility",
+      "explanation": "Given a field F, the set F[x] of polynomials with coefficients in F forms a ring. The concept of irreducibility is analogous to primality in integers: a nonconstant polynomial f(x) in F[x] is irreducible if it cannot be factored as a product of non-units of lower degree in F[x]. Whether a polynomial is irreducible may depend on the field.\n\nIrreducibility is foundational because irreducible polynomials are used to generate field extensions: for instance, adjoining a root of an irreducible polynomial creates a field extension with minimal polynomial f(x).\n\nExample: x^2-2 is irreducible over Q (cannot factor using rationals), but reducible over R (obviously splits as (x-\u221a2)(x+\u221a2)).\n\nApplications: determining splitting fields, minimal polynomials, and constructing extensions.",
+      "dependencies": [
+        "Polynomial Rings",
+        "Irreducibility of Polynomials"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph"
+      ]
+    },
+    {
+      "id": "Polynomial Rings",
+      "label": "Polynomial Rings",
+      "explanation": "Given a field F, the set of all polynomials with coefficients in F, denoted F[x], forms a ring. This ring has addition and multiplication defined termwise and distributively, respectively. Units in F[x] are precisely the nonzero scalars from F. Polynomials of positive degree in F[x] can be factored in analogy to integers, and the concept of irreducibility plays a central role.\n\nExample: Q[x] is the ring of polynomials with rational coefficients.",
+      "dependencies": [
+        "Field Definition"
+      ],
+      "relevant_for": [
+        "Polynomial Rings and Irreducibility",
+        "Irreducibility of Polynomials"
+      ]
+    },
+    {
+      "id": "Irreducibility of Polynomials",
+      "label": "Irreducibility of Polynomials",
+      "explanation": "A polynomial f(x) \u2208 F[x] is said to be irreducible over F if it is nonconstant and cannot be factored as a product of polynomials of lower positive degree in F[x]. \n\nIrreducible polynomials are analogues of prime numbers in F[x], crucial for constructing field extensions by adjoining a root of such a polynomial. Various criteria exist for irreducibility, like Eisenstein's criterion, rational root theorem, etc.\n\nExample: x^2+1 is irreducible over R (no real roots), but reducible over C.",
+      "dependencies": [
+        "Polynomial Rings"
+      ],
+      "relevant_for": [
+        "Polynomial Rings and Irreducibility",
+        "Minimal Polynomial"
+      ]
+    },
+    {
+      "id": "Splitting Fields and Algebraic Closures",
+      "label": "Splitting Fields and Algebraic Closures",
+      "explanation": "A splitting field of a polynomial f(x) over a field F is the smallest extension field of F in which f(x) completely factors into linear terms (i.e., all its roots are present). Every nonconstant polynomial has a splitting field, and splitting fields are crucial for Galois theory, often being the setting for Galois extensions.\n\nThe algebraic closure of F is an extension field in which every polynomial in F[x] splits completely, i.e., every nonconstant polynomial has a root (and thus splits).\n\nExample: The splitting field of x^3-2 over Q is Q(\u221b2, \u03b6_3), where \u03b6_3 is a primitive cube root of unity. The algebraic closure of Q is denoted Q\u0305.\n\nThese concepts are necessary to discuss normal extensions and Galois theory proper.",
+      "dependencies": [
+        "Fields and Field Extensions",
+        "Minimal Polynomial"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph",
+        "Normal and Separable Extensions"
+      ]
+    },
+    {
+      "id": "Minimal Polynomial",
+      "label": "Minimal Polynomial",
+      "explanation": "Given \u03b1 \u2208 K, where K/F is a field extension, the minimal polynomial of \u03b1 over F is the unique monic irreducible polynomial f(x) \u2208 F[x] of least degree such that f(\u03b1)=0.\n\nThe minimal polynomial captures the simplest algebraic relation \u03b1 satisfies over F and completely determines the field extension F(\u03b1) \u2245 F[x]/(f(x)).\n\nExample: For \u03b1=\u221a2 in K=Q(\u221a2), its minimal polynomial over Q is x^2-2.",
+      "dependencies": [
+        "Irreducibility of Polynomials"
+      ],
+      "relevant_for": [
+        "Splitting Fields and Algebraic Closures"
+      ]
+    },
+    {
+      "id": "Automorphisms of Fields",
+      "label": "Automorphisms of Fields",
+      "explanation": "A field automorphism of K is a bijective map \u03c3: K\u2192K that fixes the field operations (addition and multiplication) and, in the context of field extensions, usually fixes the base field F pointwise. The set of all such automorphisms forms a group under composition, called the automorphism group of the extension.\n\nCrucial for Galois theory, where the Galois group Gal(K/F) is the group of F-automorphisms of K, i.e., automorphisms of K that fix F elementwise. The structure of this group encodes deep information about the extension.\n\nExample: For K=Q(\u221a2), there are two Q-automorphisms: the identity and the map sending \u221a2 to -\u221a2 (and fixing Q).\n\nAutomorphisms are a bridge between group actions and field theory.",
+      "dependencies": [
+        "Fields and Field Extensions",
+        "Group Automorphism"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph",
+        "Galois Extensions and the Fundamental Theorem of Galois Theory"
+      ]
+    },
+    {
+      "id": "Group Automorphism",
+      "label": "Group Automorphism",
+      "explanation": "Given a group G, an automorphism is a bijective map \u03c6: G \u2192 G such that for all g,h in G, \u03c6(gh) = \u03c6(g)\u03c6(h). The set of all automorphisms forms the automorphism group Aut(G).\n\nIn field theory, we consider automorphisms of field extensions: bijective ring homomorphisms fixing the base field.",
+      "dependencies": [
+        "Field Definition"
+      ],
+      "relevant_for": [
+        "Automorphisms of Fields"
+      ]
+    },
+    {
+      "id": "Normal and Separable Extensions",
+      "label": "Normal and Separable Extensions",
+      "explanation": "A field extension K/F is said to be normal if every irreducible polynomial over F that has at least one root in K splits completely in K. Equivalently, K is the splitting field of some family of polynomials over F.\n\nAn element \u03b1 in K is separable over F if its minimal polynomial over F has distinct roots. A field extension is separable if every element is separable over F. In characteristic zero (e.g., F=Q) all extensions are separable, but not in positive characteristic.\n\nThese properties are important because Galois theory works best for normal and separable (i.e., Galois) extensions.\n\nExample: The extension Q(\u221a2)/Q is both normal (it is the splitting field of x^2-2) and separable (all polynomials over Q are separable).\n\nThese definitions help distinguish different flavors of extensions and identify when the elegant Galois correspondence applies.",
+      "dependencies": [
+        "Fields and Field Extensions",
+        "Splitting Fields and Algebraic Closures"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph",
+        "Galois Extensions and the Fundamental Theorem of Galois Theory"
+      ]
+    },
+    {
+      "id": "Galois Extensions and the Fundamental Theorem of Galois Theory",
+      "label": "Galois Extensions and the Fundamental Theorem of Galois Theory",
+      "explanation": "A field extension K/F is called a Galois extension if it is both normal and separable. The Galois group Gal(K/F) is the group of automorphisms of K fixing F.\n\nThe Fundamental Theorem of Galois Theory describes a one-to-one correspondence between the subgroups of Gal(K/F) and the intermediate fields between F and K. Under this correspondence, normal subgroups correspond to normal extensions, and fixed fields correspond to subgroups.\n\nCentral Example: For K=Q(\u221a2,\u221a3) over Q, the Galois group is C2 x C2, and the intermediate fields are Q(\u221a2), Q(\u221a3), Q(\u221a6), corresponding to subgroups of the Galois group.\n\nThis theorem is the central engine that makes field theory and group theory work together.",
+      "dependencies": [
+        "Normal and Separable Extensions",
+        "Automorphisms of Fields",
+        "Group Theory Basics"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph",
+        "Solvability by Radicals and Simple Groups",
+        "Classic Applications of Galois Theory"
+      ]
+    },
+    {
+      "id": "Group Theory Basics",
+      "label": "Group Theory Basics",
+      "explanation": "Basics needed include:\n- Group: a set with an associative binary operation, identity, and inverses (possibly abelian or non-abelian).\n- Subgroup, normal subgroup, quotient group.\n- Symmetric group S_n: group of all permutations on n elements.\n- Group action: a group acting on a set, important for automorphisms permuting roots.\n- Orbit-stabilizer theorem, Lagrange\u2019s theorem.\n\nCrucial for understanding the structure of Galois groups and the correspondence with intermediate fields.",
+      "dependencies": [],
+      "relevant_for": [
+        "Galois Extensions and the Fundamental Theorem of Galois Theory",
+        "Connections to Group Theory",
+        "Solvable Groups",
+        "Simple Groups"
+      ]
+    },
+    {
+      "id": "Solvability by Radicals and Simple Groups",
+      "label": "Solvability by Radicals and Simple Groups",
+      "explanation": "A polynomial over a field F is solvable by radicals if its roots can be expressed by a finite number of additions, multiplications, and nth roots starting from elements of F.\n\nGalois theory shows that a polynomial is solvable by radicals if and only if its Galois group is a solvable group (i.e., it has a subnormal series whose factor groups are abelian).\n\nA simple group is a nontrivial group whose only normal subgroups are the trivial group and itself. The presence of non-abelian simple groups (as in A_5, the alternating group on 5 elements) in a Galois group blocks solvability. For degree \u2265 5, generic polynomials have unsolvable Galois groups, explaining the impossibility of solving the general quintic by radicals.\n\nExample: The Galois group of x^5-4x+2 over Q is typically S_5 (not solvable), so its roots cannot be expressed in terms of radicals.",
+      "dependencies": [
+        "Galois Extensions and the Fundamental Theorem of Galois Theory",
+        "Simple Groups",
+        "Solvable Groups"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph",
+        "Classic Applications of Galois Theory"
+      ]
+    },
+    {
+      "id": "Simple Groups",
+      "label": "Simple Groups",
+      "explanation": "A group is simple if its only normal subgroups are the trivial group and itself. Simple groups act as building blocks for all groups (Jordan-H\u00f6lder theorem).\n\nThe most important simple non-abelian groups are the alternating groups A_n, n\u22655. These show up as Galois groups for certain degree \u22655 polynomials and block solvability by radicals.",
+      "dependencies": [
+        "Group Theory Basics"
+      ],
+      "relevant_for": [
+        "Solvability by Radicals and Simple Groups",
+        "Connections to Group Theory"
+      ]
+    },
+    {
+      "id": "Solvable Groups",
+      "label": "Solvable Groups",
+      "explanation": "A finite group G is solvable if there is a chain of subgroups \\{1\\}=G_0 \u22b2 G_1 \u22b2 ... \u22b2 G_n=G such that each G_{i} is normal in G_{i+1} and each quotient G_{i+1}/G_i is abelian.\n\nSolvable groups generalize the concept of \u2018commuting\u2019 by allowing a sequence of steps until everything commutes. This condition is crucial for the solvability of polynomials by radicals via their Galois groups.",
+      "dependencies": [
+        "Group Theory Basics"
+      ],
+      "relevant_for": [
+        "Solvability by Radicals and Simple Groups",
+        "Connections to Group Theory"
+      ]
+    },
+    {
+      "id": "Classic Applications of Galois Theory",
+      "label": "Classic Applications of Galois Theory",
+      "explanation": "1. Constructible numbers (e.g., which regular polygons are constructible with straightedge and compass, ruled by the subfield lattice of field extensions generated by square roots).\n2. The impossibility of trisecting an arbitrary angle and doubling the cube.\n3. The insolvability of the general quintic equation by radicals.\n\nIn each case, the Galois groups and their structure determine the possibilities or impossibilities.\n\nExample: The non-solvability of certain equations over Q is deduced via the non-solvability of their Galois groups; regular n-gon construction is possible iff n is a power of 2 times distinct Fermat primes.",
+      "dependencies": [
+        "Galois Extensions and the Fundamental Theorem of Galois Theory",
+        "Solvability by Radicals and Simple Groups"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph"
+      ]
+    },
+    {
+      "id": "Connections to Group Theory",
+      "label": "Connections to Group Theory",
+      "explanation": "Key group theory results used in Galois theory include:\n- The notions of group automorphism, subgroup, normal subgroup, quotient group, and especially the structure of permutation and symmetric groups.\n- The Orbit-Stabilizer Theorem and group actions, relating to how automorphisms permute roots.\n- The concepts of simple and solvable groups.\n\nUnderstanding the structure of the symmetric and alternating groups, as well as properties of solvable and non-solvable groups, is crucial for recognizing which field extensions and polynomials are solvable by radicals.",
+      "dependencies": [
+        "Group Theory Basics",
+        "Solvable Groups",
+        "Simple Groups"
+      ],
+      "relevant_for": [
+        "Galois Theory: Overview and Dependency Graph"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Fields and Field Extensions"
+    },
+    {
+      "from": "Fields and Field Extensions",
+      "to": "Field Definition"
+    },
+    {
+      "from": "Fields and Field Extensions",
+      "to": "Field Extension Definition"
+    },
+    {
+      "from": "Field Extension Definition",
+      "to": "Field Definition"
+    },
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Polynomial Rings and Irreducibility"
+    },
+    {
+      "from": "Polynomial Rings and Irreducibility",
+      "to": "Polynomial Rings"
+    },
+    {
+      "from": "Polynomial Rings",
+      "to": "Field Definition"
+    },
+    {
+      "from": "Polynomial Rings and Irreducibility",
+      "to": "Irreducibility of Polynomials"
+    },
+    {
+      "from": "Irreducibility of Polynomials",
+      "to": "Polynomial Rings"
+    },
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Splitting Fields and Algebraic Closures"
+    },
+    {
+      "from": "Splitting Fields and Algebraic Closures",
+      "to": "Fields and Field Extensions"
+    },
+    {
+      "from": "Splitting Fields and Algebraic Closures",
+      "to": "Minimal Polynomial"
+    },
+    {
+      "from": "Minimal Polynomial",
+      "to": "Irreducibility of Polynomials"
+    },
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Automorphisms of Fields"
+    },
+    {
+      "from": "Automorphisms of Fields",
+      "to": "Fields and Field Extensions"
+    },
+    {
+      "from": "Automorphisms of Fields",
+      "to": "Group Automorphism"
+    },
+    {
+      "from": "Group Automorphism",
+      "to": "Field Definition"
+    },
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Normal and Separable Extensions"
+    },
+    {
+      "from": "Normal and Separable Extensions",
+      "to": "Fields and Field Extensions"
+    },
+    {
+      "from": "Normal and Separable Extensions",
+      "to": "Splitting Fields and Algebraic Closures"
+    },
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Galois Extensions and the Fundamental Theorem of Galois Theory"
+    },
+    {
+      "from": "Galois Extensions and the Fundamental Theorem of Galois Theory",
+      "to": "Normal and Separable Extensions"
+    },
+    {
+      "from": "Galois Extensions and the Fundamental Theorem of Galois Theory",
+      "to": "Automorphisms of Fields"
+    },
+    {
+      "from": "Galois Extensions and the Fundamental Theorem of Galois Theory",
+      "to": "Group Theory Basics"
+    },
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Solvability by Radicals and Simple Groups"
+    },
+    {
+      "from": "Solvability by Radicals and Simple Groups",
+      "to": "Galois Extensions and the Fundamental Theorem of Galois Theory"
+    },
+    {
+      "from": "Solvability by Radicals and Simple Groups",
+      "to": "Simple Groups"
+    },
+    {
+      "from": "Simple Groups",
+      "to": "Group Theory Basics"
+    },
+    {
+      "from": "Solvability by Radicals and Simple Groups",
+      "to": "Solvable Groups"
+    },
+    {
+      "from": "Solvable Groups",
+      "to": "Group Theory Basics"
+    },
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Classic Applications of Galois Theory"
+    },
+    {
+      "from": "Classic Applications of Galois Theory",
+      "to": "Galois Extensions and the Fundamental Theorem of Galois Theory"
+    },
+    {
+      "from": "Classic Applications of Galois Theory",
+      "to": "Solvability by Radicals and Simple Groups"
+    },
+    {
+      "from": "Galois Theory: Overview and Dependency Graph",
+      "to": "Connections to Group Theory"
+    },
+    {
+      "from": "Connections to Group Theory",
+      "to": "Group Theory Basics"
+    },
+    {
+      "from": "Connections to Group Theory",
+      "to": "Solvable Groups"
+    },
+    {
+      "from": "Connections to Group Theory",
+      "to": "Simple Groups"
+    }
+  ]
+}

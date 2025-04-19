@@ -1,0 +1,259 @@
+body {
+    margin: 0;
+    padding: 30px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #1a2b45;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: #e1e7ef;
+}
+
+#header {
+    flex: 0 0 auto;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+h1 {
+    color: #60a5fa;
+    margin: 0 0 15px 0;
+    font-weight: 700;
+    font-size: 2.5em;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(120deg, #60a5fa, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#status {
+    color: #94a3b8;
+    font-size: 0.95em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#main-content {
+    flex: 1 1 auto;
+    display: flex;
+    gap: 30px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#graph-container {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+}
+
+#node-info {
+    flex: 2;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
+}
+
+#node-title {
+    color: #60a5fa;
+    margin: 0;
+    font-size: 1.8em;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+}
+
+#node-title .katex {
+    color: #60a5fa;
+    font-size: 1em;
+}
+
+#node-title .katex-display {
+    margin: 0.4em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+#node-explanation {
+    color: #e1e7ef;
+    line-height: 1.7;
+    font-size: 1.1em;
+    white-space: pre-wrap;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+}
+
+#dependencies-section,
+#relevant-for-section {
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+#dependencies-section h3,
+#relevant-for-section h3 {
+    color: #60a5fa;
+    margin: 0 0 15px 0;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+
+#dependencies-text,
+#relevant-for-text {
+    color: #e1e7ef;
+    margin: 0;
+    line-height: 1.5;
+    font-size: 1.1em;
+}
+
+.node-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#dependencies-list,
+#relevant-for-list {
+    composes: node-list;
+}
+
+.node-list li {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.node-list li.empty-state {
+    color: #94a3b8;
+    cursor: default;
+    font-style: italic;
+}
+
+.node-list li.explained {
+    background: rgba(37, 99, 235, 0.2);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    color: #60a5fa;
+}
+
+.node-list li.unexplained {
+    background: rgba(71, 85, 105, 0.2);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: #94a3b8;
+}
+
+.node-list li:not(.empty-state):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.clickable-list {
+    cursor: default;
+}
+
+.clickable-item {
+    color: #60a5fa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.clickable-item:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+    transform: translateY(-1px);
+}
+
+#graph-selector {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+#graph-selector label {
+    color: #94a3b8;
+    font-size: 0.95em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#graph-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #e1e7ef;
+    padding: 8px 16px;
+    font-size: 0.95em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#graph-select:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+#graph-select:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+#graph-select option {
+    background: #1a2b45;
+    color: #e1e7ef;
+    padding: 8px;
+}
+
+.explanation-content {
+    color: #e1e7ef;
+    line-height: 1.5;
+    font-size: 1.1em;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+/* KaTeX styles */
+.explanation-content .katex {
+    font-size: 1.1em;
+    color: #e1e7ef;
+}
+
+.explanation-content .katex-display {
+    margin: 0.6em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+/* First element should not have top margin */
+.explanation-content > *:first-child {
+    margin-top: 0;
+}
+
+/* Last element should not have bottom margin */
+.explanation-content > *:last-child {
+    margin-bottom: 0;
+} 

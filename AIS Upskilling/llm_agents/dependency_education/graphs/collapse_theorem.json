@@ -1,0 +1,210 @@
+{
+  "nodes": [
+    {
+      "id": "Collapse Theorem (Complexity Theory)",
+      "label": "Collapse Theorem (Complexity Theory)",
+      "explanation": "## Collapse Theorem (Polynomial Hierarchy)\n\nThe collapse theorem is a fundamental result in computational complexity theory concerning the structure of the polynomial hierarchy (PH). The basic statement is:\n\n**If $\\Sigma_k^P = \\Pi_k^P$ for some $k \\geq 1$, then the polynomial hierarchy collapses to the $k$th level.**\n\nThis means that, if it turns out that the $k$th existential and universal levels of the hierarchy coincide, then no new complexity classes are found above this level; all higher levels are no more powerful than the $k$th level.\n\n### Motivation and Background\n\nThe polynomial hierarchy, much like the arithmetic hierarchy in logic, is a hierarchy of complexity classes built upon the notions of NP (nondeterministic polynomial time) and co-NP, by allowing a bounded number of alternating quantifiers.\n\nTypical classes involved:\n- $\\Sigma_k^P$: The class of problems solvable with a polynomial-time Turing machine making $k$ alternations of existential and universal oracles starting with existential.\n- $\\Pi_k^P$: Same as above, but starting with universal quantification.\n\n### Formal Statement\n\nIf $\\Sigma_k^P = \\Pi_k^P$ for some $k \\geq 1$, then for all $j \\geq k$, $\\Sigma_j^P = \\Sigma_k^P$ and $\\Pi_j^P = \\Pi_k^P$. In other words, the whole hierarchy 'collapses' to level $k$.\n\n### Proof Outline\n\n**Goal:** Show that if $\\Sigma_k^P = \\Pi_k^P$, then $\\Sigma_{k+1}^P = \\Sigma_k^P$ and $\\Pi_{k+1}^P = \\Sigma_k^P$, so that higher levels add nothing new, and by induction, all above $k$ are the same.\n\n#### *Step 1: Expression of Languages*\nRecall:\n- $L \\in \\Sigma_{k+1}^P$ means there is a predicate $R$ computable in polynomial time s.t.\n$$\nx \\in L \\iff \\exists y_1 \\forall y_2 \\cdots Q_{k+1} y_{k+1} \\ R(x, y_1, ..., y_{k+1})\n$$\nwhere $Q_{k+1}$ is $\\exists$ if $k+1$ is odd and $\\forall$ if even.\n\n#### *Step 2: Using the Collapse at Level $k$*\nIf $\\Sigma_k^P = \\Pi_k^P$, then any $\\Sigma_k^P$ predicate can be rewritten as a $\\Pi_k^P$ predicate, and vice versa. Thus, any sequence starting with $\\exists$ followed by a $\\Pi_k^P$ predicate can be simulated by $\\Sigma_k^P$.\n\n#### *Step 3: Collapsing the Next Level*\nConsider $L \\in \\Sigma_{k+1}^P$:\n$$\nx \\in L \\iff \\exists y_1 \\forall y_2 \\cdots Q_{k+1} y_{k+1} \\ R(x, y_1, ..., y_{k+1})\n$$\nFixing $y_1$, the rest of the quantifiers define a $\\Pi_k^P$ predicate. But by hypothesis, $\\Pi_k^P = \\Sigma_k^P$! Thus, for each $y_1$, the inner quantification can be replaced with a $\\Sigma_k^P$ predicate. Therefore, the entire expression can be written as a $\\Sigma_k^P$ predicate over $(x, y_1)$, i.e. $\\Sigma_{k+1}^P \\subseteq \\Sigma_k^P$.\n\nBut always $\\Sigma_k^P \\subseteq \\Sigma_{k+1}^P$, so equality follows. Similarly for $\\Pi_{k+1}^P$.\n\n#### *Step 4: Induction*\nBy iteratively applying this argument, all levels $j \\geq k$ collapse to $\\Sigma_k^P$.\n\n### Central Example\nSuppose $\\Sigma_2^P = \\Pi_2^P$. Then for $\\Sigma_3^P$ (problems of the form\n$$\nx \\in L \\iff \\exists y_1 \\forall y_2 \\exists y_3 \\ R(x, y_1, y_2, y_3)\n$$\n)\n\nfor fixed $y_1$, the $\\forall y_2 \\exists y_3$ part is a $\\Pi_2^P$ predicate, which (by hypothesis) can be written as a $\\Sigma_2^P$ predicate. So the whole statement is a $\\Sigma_2^P$ predicate, and so $\\Sigma_3^P \\subseteq \\Sigma_2^P$\u2014i.e., the hierarchy collapses to $\\Sigma_2^P$.\n\n### What We Need to Prove\nIn order to fully justify the collapse theorem, we need to iteratively define and prove the following dependencies:\n1. Definition of the polynomial hierarchy ($\\Sigma_k^P$, $\\Pi_k^P$, $\\Delta_k^P$);\n2. The formal definitions of alternation, oracle machines, and quantifiers in this context;\n3. Properties of these classes (e.g., $\\Sigma_k^P \\subseteq \\Sigma_{k+1}^P$);\n4. The fact that $\\Sigma_k^P = \\Pi_k^P$ implies $\\Sigma_{k+1}^P = \\Sigma_k^P$.\n\n---\n\n**Dependencies:**\n- Polynomial Hierarchy (Definition)\n- Alternating Quantifiers and Oracle Machines\n- Relationship between $\\Sigma_k^P$ and $\\Pi_k^P$\n- Monotonicity of PH ($\\Sigma_k^P \\subseteq \\Sigma_{k+1}^P$)\n",
+      "dependencies": [
+        "Polynomial Hierarchy (Definition)",
+        "Alternating Quantifiers and Oracle Machines",
+        "Relationship between \u03a3_k^P and \u03a0_k^P",
+        "Monotonicity of PH (\u03a3_k^P \u2286 \u03a3_{k+1}^P)"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Polynomial Hierarchy (Definition)",
+      "label": "Polynomial Hierarchy (Definition)",
+      "explanation": "## The Polynomial Hierarchy (PH) \u2014 Definition\n\nThe Polynomial Hierarchy (PH) is a hierarchy of complexity classes, generalizing the NP and co-NP classes by allowing multiple alternations of existential and universal quantifiers. It reflects the complexity of decision problems that can be solved by polynomial-time Turing machines with access to certain types of oracles, or described by formulas alternating quantifiers over polynomially bounded variables.\n\n### Base Level ($k=0$)\n- $\\Sigma_0^P = \\Pi_0^P = P$: The class of problems solvable deterministically in polynomial time.\n\n### First Level\n- $\\Sigma_1^P = NP$: Problems where there exists a polynomial-sized witness that can be checked in polynomial time.\n- $\\Pi_1^P = coNP$: Problems whose complement is in NP.\n\n### Higher Levels\nFor $k \\geq 1$:\n- $\\Sigma_{k+1}^P = NP^{\\Sigma_k^P}$: Problems solvable in NP with an oracle for $\\Sigma_k^P$ problems.\n- $\\Pi_{k+1}^P = coNP^{\\Sigma_k^P}$: Problems solvable in co-NP with an oracle for $\\Sigma_k^P$ problems.\n\nAlternatively, in terms of quantifiers:\n- $x \\in L$ if and only if $\\exists y_1 \\forall y_2 \\exists y_3 ... Q_{k} y_{k} \\, R(x, y_1, ..., y_{k})$ for $\\Sigma_k^P$ (starting with $\\exists$)\n- $x \\in L$ if and only if $\\forall y_1 \\exists y_2 \\forall y_3 ... Q_{k} y_{k} \\, R(x, y_1, ..., y_{k})$ for $\\Pi_k^P$ (starting with $\\forall$)\nHere, $R$ is a polynomial-time computable predicate and each $y_i$ is polynomially bounded in $|x|$.\n\n### The full PH\nPH $= \\bigcup_{k=0}^{\\infty} \\Sigma_k^P$\n\n### Central Example\n- A $\\Sigma_2^P$ problem: \"Does there exist a setting $y_1$ for some variables such that for all settings $y_2$ for other variables, $R(x, y_1, y_2)$ holds?\" This can describe quantified Boolean formula (QBF) problems with 2 quantifier alternations. Checking if a game has a winning strategy for the first player can be $\\Sigma_2^P$-complete.",
+      "dependencies": [
+        "NP (Nondeterministic Polynomial Time)",
+        "co-NP",
+        "P Class (Deterministic Polynomial Time)",
+        "Oracle Machines"
+      ],
+      "relevant_for": [
+        "Collapse Theorem (Complexity Theory)"
+      ]
+    },
+    {
+      "id": "NP (Nondeterministic Polynomial Time)",
+      "label": "NP (Nondeterministic Polynomial Time)",
+      "explanation": "## NP (Nondeterministic Polynomial Time)\n\nNP is a fundamental complexity class representing decision problems for which a solution can be verified in polynomial time by a deterministic Turing machine.\n\n### Formal Definition\nA language $L$ is in NP if there is a polynomial $p(n)$ and a polynomial-time computable predicate $R(x, w)$ such that:\n$$\nx \\in L \\iff \\exists w \\in \\{0,1\\}^{p(|x|)} \\text{ such that } R(x, w) = 1\n$$\nHere, $w$ is called a witness or certificate. The predicate $R$ checks that $w$ is a valid witness for $x$.\n\n- Intuitively, NP contains problems where, if the answer is 'yes', there is some short (polynomial size) proof that can be efficiently checked.\n\n### Examples\n- SAT: Is there a satisfying assignment for a given Boolean formula?\n- Hamiltonian Cycle: Is there a Hamiltonian cycle in a given graph?\n\n### Dependencies\n- Deterministic Turing Machine\n- Polynomial-Time Computable Predicate",
+      "dependencies": [
+        "Deterministic Turing Machine",
+        "Polynomial-Time Computable Predicate"
+      ],
+      "relevant_for": [
+        "Polynomial Hierarchy (Definition)",
+        "Alternating Quantifiers and Oracle Machines"
+      ]
+    },
+    {
+      "id": "Deterministic Turing Machine",
+      "label": "Deterministic Turing Machine",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "NP (Nondeterministic Polynomial Time)",
+        "P Class (Deterministic Polynomial Time)"
+      ]
+    },
+    {
+      "id": "Polynomial-Time Computable Predicate",
+      "label": "Polynomial-Time Computable Predicate",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Alternating Quantifiers and Oracle Machines",
+        "NP (Nondeterministic Polynomial Time)",
+        "P Class (Deterministic Polynomial Time)"
+      ]
+    },
+    {
+      "id": "co-NP",
+      "label": "co-NP",
+      "explanation": "## co-NP\n\nco-NP is the class of decision problems whose complements are in NP.\n\n### Formal Definition\nA language $L$ is in co-NP if its complement $\\overline{L}$ is in NP. That is, the answer is 'no' instances can be efficiently verified):\n$$\nL \\in \\text{co-NP} \\iff \\overline{L} \\in \\text{NP}\n$$\n\nIn terms of certificates: for $x \\notin L$, there exists a short witness $w$ such that $R(x, w)$ verifies that $x \\notin L$.\n\n### Example\n- Tautology testing: Given a Boolean formula, is it true for every assignment? This is the complement of SAT and is in co-NP.\n\n### Dependencies\n- NP (Nondeterministic Polynomial Time)",
+      "dependencies": [],
+      "relevant_for": [
+        "Polynomial Hierarchy (Definition)"
+      ]
+    },
+    {
+      "id": "P Class (Deterministic Polynomial Time)",
+      "label": "P Class (Deterministic Polynomial Time)",
+      "explanation": "## P Class (Deterministic Polynomial Time)\n\nP is the class of decision problems (languages) solvable by a deterministic Turing machine in polynomial time.\n\n### Formal Definition\nA language $L$ is in P if there is a deterministic Turing machine $M$ and a polynomial $p(n)$ such that for all inputs $x$:\n- $M(x)$ halts with output accept or reject on all $x$\n- $M(x)$ runs in at most $p(|x|)$ steps\n- $x \\in L$ iff $M(x)$ accepts $x$\n\nP is considered the class of efficiently solvable problems.\n\n### Example\n- Primality testing\n- Shortest path problem\n\n### Dependencies\n- Deterministic Turing Machine\n- Polynomial-Time Computable Predicate",
+      "dependencies": [
+        "Deterministic Turing Machine",
+        "Polynomial-Time Computable Predicate"
+      ],
+      "relevant_for": [
+        "Polynomial Hierarchy (Definition)"
+      ]
+    },
+    {
+      "id": "Oracle Machines",
+      "label": "Oracle Machines",
+      "explanation": "## Oracle Turing Machines\n\nAn **oracle Turing machine** is a (deterministic or nondeterministic) Turing machine equipped with a special \"oracle tape\" and query mechanism. The machine can query an oracle for a particular language $A$, and the oracle answers instantly whether a string is in $A$.\n\n### Formal Definition\n- The oracle machine can write $y$ to the oracle tape and enter a query state.\n- In one step, the oracle replaces $y$ with 1 (accept) or 0 (reject) based on whether $y \\in A$.\n- The time spent for any oracle query is counted as a single step.\n\n### Usage in Complexity Theory\n- $P^A$, $NP^A$ etc. denote classes of languages solvable in polynomial time by machines with access to oracle $A$.\n- Oracle machines define hierarchies (like the polynomial hierarchy) via relativization.\n\n### Example\n- A $P^{SAT}$ machine can instantly solve SAT instances as subproblems while solving others in polynomial time.\n\n### Dependencies\n- Turing Machine (General Model)",
+      "dependencies": [
+        "Turing Machine (General Model)"
+      ],
+      "relevant_for": [
+        "Polynomial Hierarchy (Definition)",
+        "Alternating Quantifiers and Oracle Machines",
+        "Monotonicity of PH (\u03a3_k^P \u2286 \u03a3_{k+1}^P)"
+      ]
+    },
+    {
+      "id": "Turing Machine (General Model)",
+      "label": "Turing Machine (General Model)",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Oracle Machines"
+      ]
+    },
+    {
+      "id": "Alternating Quantifiers and Oracle Machines",
+      "label": "Alternating Quantifiers and Oracle Machines",
+      "explanation": "## Alternating Quantifiers and Oracle Machines in the Polynomial Hierarchy\n\n### Alternating Quantifiers\n\nQuantifier alternation is the essence of the structure of the polynomial hierarchy. Consider sentences of the form:\n$$\nx \\in L \\iff \\exists y_1 \\forall y_2 \\exists y_3 \\cdots Q_k y_k \\; R(x, y_1, y_2, \\ldots, y_k),\n$$\nwhere $Q_k$ alternates between $\\exists$ and $\\forall$ depending on parity, and $R$ is computable in polynomial time. Each block of quantifiers increases the complexity of the problem, as it adds another layer of nondeterminism (existential) or adversarial choice (universal), but all variables are bounded in size polynomially in $|x|$.\n\n### Oracle Turing Machines\n\nAn **oracle machine** is a Turing machine equipped with a black box \u2014 an \"oracle\" \u2014 that can solve a particular language (decision problem) instantly. The notation $NP^A$ denotes the class of problems solvable in NP with access to oracle $A$.\n\nThe levels of the polynomial hierarchy can be defined recursively using Turing machines with oracles for the previous level:\n- $\\Sigma_{k+1}^P = NP^{\\Sigma_k^P}$ (NP machines with access to a $\\Sigma_k^P$ oracle)\n- $\\Pi_{k+1}^P = coNP^{\\Sigma_k^P}$\n\nThis equivalence between quantifier alternation and oracle machines provides the two main formalizations of the polynomial hierarchy.\n\n### Example\nFor a $\\Sigma_2^P$ language:\n- Quantifier view: $x \\in L \\iff \\exists y_1 \\forall y_2 \\; R(x, y_1, y_2)$\n- Oracle view: $x \\in L$ if a nondeterministic polynomial Turing machine can, with help from an NP oracle, accept $x$.\n\n### Dependencies\n- Definitions of NP, co-NP\n- Definition of Oracle Turing Machines\n- Polynomial-Time Computable Predicates",
+      "dependencies": [
+        "NP (Nondeterministic Polynomial Time)",
+        "Oracle Machines",
+        "Polynomial-Time Computable Predicate"
+      ],
+      "relevant_for": [
+        "Collapse Theorem (Complexity Theory)"
+      ]
+    },
+    {
+      "id": "Relationship between \u03a3_k^P and \u03a0_k^P",
+      "label": "Relationship between \u03a3_k^P and \u03a0_k^P",
+      "explanation": "## Relationship between $\\Sigma_k^P$ and $\\Pi_k^P$\n\n$\\Sigma_k^P$ and $\\Pi_k^P$ are sibling classes at each level of the polynomial hierarchy, analogous to the relationship between NP and co-NP at the first level.\n\n- $\\Sigma_k^P$ is characterized by $k$ alternating quantifiers starting with $\\exists$:\n  $x \\in L$ if and only if $\\exists y_1 \\forall y_2 \\cdots Q_k y_k \\, R(x, y_1, ..., y_k)$. \n- $\\Pi_k^P$ is characterized by the same number of alternations, but starts with $\\forall$:\n  $x \\in L$ if and only if $\\forall y_1 \\exists y_2 \\cdots Q_k y_k \\, R(x, y_1, ..., y_k)$.\n\n**Key Points:**\n- $\\Pi_k^P$ is the complement of $\\Sigma_k^P$; if $L \\in \\Sigma_k^P$, then $\\overline L \\in \\Pi_k^P$.\n- $\\Sigma_k^P$ and $\\Pi_k^P$ are defined using the same types of polynomial-time predicates, just with alternated quantifier order.\n- $\\Sigma_1^P = NP$, $\\Pi_1^P = coNP$.\n- For all $k$, $\\Sigma_k^P$ and $\\Pi_k^P$ contain each other's complements.\n- While it is conjectured that $\\Sigma_k^P \\ne \\Pi_k^P$ for all $k \\geq 1$, the collapse theorem shows that equality for some $k$ collapses the hierarchy.\n\n### Example\nLet $L$ be the set of sentences true for some assignment of $y_1$ such that for all choices of $y_2$, a formula $R(x, y_1, y_2)$ holds. $L \\in \\Sigma_2^P$, while its complement is in $\\Pi_2^P$.\n\n### Dependencies\n- Definition of $\\Sigma_k^P$\n- Definition of $\\Pi_k^P$",
+      "dependencies": [],
+      "relevant_for": [
+        "Collapse Theorem (Complexity Theory)"
+      ]
+    },
+    {
+      "id": "Monotonicity of PH (\u03a3_k^P \u2286 \u03a3_{k+1}^P)",
+      "label": "Monotonicity of PH (\u03a3_k^P \u2286 \u03a3_{k+1}^P)",
+      "explanation": "## Monotonicity of the Polynomial Hierarchy\n\nThe polynomial hierarchy is monotonic in that each level is contained within the next:\n$$\n\\Sigma_k^P \\subseteq \\Sigma_{k+1}^P\n$$\n$$\n\\Pi_k^P \\subseteq \\Pi_{k+1}^P\n$$\n\nThis is because increasing the number of quantifier alternations or allowing an oracle for a larger class can only make more languages accessible to a polynomial-time machine (or at least not reduce them).\n\n### Proof Sketch\nLet $L \\in \\Sigma_k^P$. Then $L$ can be decided via $k$ quantifier alternations, starting with $\\exists$.\n- $L = \\{x: \\exists y_1 \\forall y_2 \\cdots Q_k y_k \\, R(x, y_1, ..., y_k)\\}$\n\nFor $\\Sigma_{k+1}^P$, the definition is:\n- $L' = \\{x: \\exists z_1 \\forall z_2 \\cdots Q_{k+1} z_{k+1} \\, S(x, z_1, ..., z_{k+1})\\}$\n\nBut we can \"ignore\" the new variable and set $S(x, y_1, ..., y_k, z_{k+1}) = R(x, y_1, ..., y_k)$, so that the extra quantifier does not affect the answer (e.g., universally quantifying a dummy variable). Therefore, $L \\in \\Sigma_{k+1}^P$.\n\nThe same argument holds for $\\Pi_k^P \\subseteq \\Pi_{k+1}^P$.\n\n### Example\n$\\Sigma_1^P = NP \\subseteq \\Sigma_2^P = NP^{NP}$: NP machines can ignore the ability to ask the oracle and operate as if it were just NP.\n\n### Dependencies\n- Definition of $\\Sigma_k^P$ and its relativized forms\n- Oracle machine formalism",
+      "dependencies": [
+        "Oracle Machines"
+      ],
+      "relevant_for": [
+        "Collapse Theorem (Complexity Theory)"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "Collapse Theorem (Complexity Theory)",
+      "to": "Polynomial Hierarchy (Definition)"
+    },
+    {
+      "from": "Polynomial Hierarchy (Definition)",
+      "to": "NP (Nondeterministic Polynomial Time)"
+    },
+    {
+      "from": "NP (Nondeterministic Polynomial Time)",
+      "to": "Deterministic Turing Machine"
+    },
+    {
+      "from": "NP (Nondeterministic Polynomial Time)",
+      "to": "Polynomial-Time Computable Predicate"
+    },
+    {
+      "from": "Polynomial Hierarchy (Definition)",
+      "to": "co-NP"
+    },
+    {
+      "from": "Polynomial Hierarchy (Definition)",
+      "to": "P Class (Deterministic Polynomial Time)"
+    },
+    {
+      "from": "P Class (Deterministic Polynomial Time)",
+      "to": "Deterministic Turing Machine"
+    },
+    {
+      "from": "P Class (Deterministic Polynomial Time)",
+      "to": "Polynomial-Time Computable Predicate"
+    },
+    {
+      "from": "Polynomial Hierarchy (Definition)",
+      "to": "Oracle Machines"
+    },
+    {
+      "from": "Oracle Machines",
+      "to": "Turing Machine (General Model)"
+    },
+    {
+      "from": "Collapse Theorem (Complexity Theory)",
+      "to": "Alternating Quantifiers and Oracle Machines"
+    },
+    {
+      "from": "Alternating Quantifiers and Oracle Machines",
+      "to": "NP (Nondeterministic Polynomial Time)"
+    },
+    {
+      "from": "Alternating Quantifiers and Oracle Machines",
+      "to": "Oracle Machines"
+    },
+    {
+      "from": "Alternating Quantifiers and Oracle Machines",
+      "to": "Polynomial-Time Computable Predicate"
+    },
+    {
+      "from": "Collapse Theorem (Complexity Theory)",
+      "to": "Relationship between \u03a3_k^P and \u03a0_k^P"
+    },
+    {
+      "from": "Collapse Theorem (Complexity Theory)",
+      "to": "Monotonicity of PH (\u03a3_k^P \u2286 \u03a3_{k+1}^P)"
+    },
+    {
+      "from": "Monotonicity of PH (\u03a3_k^P \u2286 \u03a3_{k+1}^P)",
+      "to": "Oracle Machines"
+    }
+  ]
+}

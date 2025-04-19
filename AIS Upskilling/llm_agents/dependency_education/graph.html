@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dependency Graph Visualization</title>
+    <link rel="stylesheet" type="text/css" href="./graph_style.css">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Add KaTeX for LaTeX rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+    <div id="header">
+        <h1>Knowledge Dependency Map</h1>
+        <div id="graph-selector">
+            <label for="graph-select">Current Graph:</label>
+            <select id="graph-select" onchange="switchGraph(this.value)"></select>
+        </div>
+        <div id="status">Last updated: Never</div>
+    </div>
+    <div id="main-content">
+        <div id="graph-container"></div>
+        <div id="node-info">
+            <h2 id="node-title">Select a node to view details</h2>
+            <div id="node-explanation" class="explanation-content">Click on any node in the graph to view its explanation.</div>
+            <div id="dependencies-section">
+                <h3>Dependencies</h3>
+                <p id="dependencies-text" class="clickable-list">No dependencies</p>
+            </div>
+            <div id="relevant-for-section">
+                <h3>Relevant For</h3>
+                <p id="relevant-for-text" class="clickable-list">Not a dependency for any topic</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Function to render LaTeX in text
+        function renderContent(content) {
+            // Create a temporary div to hold the content
+            const tempDiv = document.createElement('div');
+            tempDiv.textContent = content;
+            
+            // Render LaTeX in the temporary div
+            renderMathInElement(tempDiv, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false},
+                    {left: "\\[", right: "\\]", display: true},
+                    {left: "\\(", right: "\\)", display: false}
+                ],
+                throwOnError: false,
+                output: 'html'
+            });
+            
+            return tempDiv.innerHTML;
+        }
+
+        let network = null;
+        let lastData = null;
+        let currentGraph = null;
+        const container = document.getElementById('graph-container');
+        const graphSelect = document.getElementById('graph-select');
+
+        async function loadAvailableGraphs() {
+            try {
+                const response = await fetch('./graphs/available_graphs.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                // Clear existing options
+                graphSelect.innerHTML = '';
+                
+                // Add options for each available graph
+                data.graphs.forEach(graph => {
+                    const option = document.createElement('option');
+                    option.value = graph;
+                    option.textContent = graph;
+                    if (graph === data.current) {
+                        option.selected = true;
+                        currentGraph = graph;
+                    }
+                    graphSelect.appendChild(option);
+                });
+                
+                // Initial graph load
+                await updateGraph();
+            } catch (error) {
+                console.error('Error loading available graphs:', error);
+                document.getElementById('status').textContent = 
+                    `Error loading graphs: ${error.message}`;
+            }
+        }
+
+        function switchGraph(graphName) {
+            currentGraph = graphName;
+            updateGraph();
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('status').textContent = 
+                `Last updated: ${now.toLocaleTimeString()}`;
+        }
+
+        function compareData(newData, oldData) {
+            if (!oldData) return true;
+            return JSON.stringify(newData) !== JSON.stringify(oldData);
+        }
+
+        function getNodeColor(explanation) {
+            const hasExplanation = explanation && explanation !== "No explanation available yet.";
+            return hasExplanation ? {
+                background: '#2563eb',
+                border: '#60a5fa',
+                highlight: {
+                    background: '#3b82f6',
+                    border: '#93c5fd'
+                },
+                hover: {
+                    background: '#3b82f6',
+                    border: '#93c5fd'
+                }
+            } : {
+                background: '#475569',
+                border: '#64748b',
+                highlight: {
+                    background: '#64748b',
+                    border: '#94a3b8'
+                },
+                hover: {
+                    background: '#64748b',
+                    border: '#94a3b8'
+                }
+            };
+        }
+
+        function createClickableSpan(text, node, allNodes) {
+            const span = document.createElement('span');
+            span.textContent = text;
+            span.className = 'clickable-item';
+            span.onclick = () => {
+                network.focus(node.id, {
+                    scale: 1,
+                    animation: true
+                });
+                network.selectNodes([node.id]);
+                updateNodeInfo(node, allNodes);
+            };
+            return span;
+        }
+
+        function updateDependenciesList(node, allNodes) {
+            const dependenciesText = document.getElementById('dependencies-text');
+            dependenciesText.innerHTML = ''; // Clear current content
+            
+            if (!node || !node.dependencies || node.dependencies.length === 0) {
+                dependenciesText.textContent = 'No dependencies';
+                return;
+            }
+
+            node.dependencies.forEach((depId, index) => {
+                const depNode = allNodes.find(n => n.id === depId);
+                if (depNode) {
+                    if (index > 0) {
+                        dependenciesText.appendChild(document.createTextNode(', '));
+                    }
+                    dependenciesText.appendChild(createClickableSpan(depNode.label, depNode, allNodes));
+                }
+            });
+        }
+
+        function updateRelevantForList(node, allNodes) {
+            const relevantForText = document.getElementById('relevant-for-text');
+            relevantForText.innerHTML = ''; // Clear current content
+            
+            if (!node || !node.relevant_for || node.relevant_for.length === 0) {
+                relevantForText.textContent = 'Not a dependency for any topic';
+                return;
+            }
+
+            node.relevant_for.forEach((parentId, index) => {
+                const parentNode = allNodes.find(n => n.id === parentId);
+                if (parentNode) {
+                    if (index > 0) {
+                        relevantForText.appendChild(document.createTextNode(', '));
+                    }
+                    relevantForText.appendChild(createClickableSpan(parentNode.label, parentNode, allNodes));
+                }
+            });
+        }
+
+        function updateNodeInfo(node, allNodes) {
+            const titleElement = document.getElementById('node-title');
+            titleElement.innerHTML = renderContent(node.label);
+            const explanationDiv = document.getElementById('node-explanation');
+            explanationDiv.innerHTML = node.explanation ? 
+                renderContent(node.explanation) : 
+                'No explanation available yet.';
+            updateDependenciesList(node, allNodes);
+            updateRelevantForList(node, allNodes);
+        }
+
+        const options = {
+            nodes: {
+                shape: 'box',
+                margin: 14,
+                widthConstraint: {
+                    maximum: 200
+                },
+                borderWidth: 2,
+                font: {
+                    size: 16,
+                    face: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                    color: '#e1e7ef',
+                    bold: {
+                        color: '#ffffff',
+                        size: 16,
+                        face: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                        mod: 'bold'
+                    }
+                },
+                shadow: {
+                    enabled: true,
+                    color: 'rgba(0, 0, 0, 0.3)',
+                    size: 5,
+                    x: 0,
+                    y: 3
+                },
+                padding: 20
+            },
+            edges: {
+                arrows: {
+                    to: {
+                        enabled: true,
+                        scaleFactor: 0.8,
+                        type: 'arrow'
+                    }
+                },
+                smooth: {
+                    type: 'cubicBezier',
+                    forceDirection: 'vertical',
+                    roundness: 0.4
+                },
+                color: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                    highlight: '#60a5fa',
+                    hover: '#60a5fa'
+                },
+                width: 2,
+                selectionWidth: 3
+            },
+            layout: {
+                hierarchical: {
+                    direction: 'UD',
+                    sortMethod: 'directed',
+                    levelSeparation: 250,
+                    nodeSpacing: 300,
+                    treeSpacing: 300,
+                    blockShifting: true,
+                    edgeMinimization: true,
+                    parentCentralization: true,
+                    shakeTowards: 'roots'
+                }
+            },
+            physics: {
+                enabled: true,
+                hierarchicalRepulsion: {
+                    nodeDistance: 250,
+                    centralGravity: 0.5,
+                    springLength: 300,
+                    springConstant: 0.04,
+                    damping: 0.09
+                },
+                stabilization: {
+                    enabled: true,
+                    iterations: 1000,
+                    updateInterval: 100,
+                    fit: true
+                }
+            },
+            interaction: {
+                hover: true,
+                tooltipDelay: 300,
+                zoomView: true,
+                dragView: true,
+                navigationButtons: true,
+                keyboard: true,
+                hideEdgesOnDrag: true,
+                hideEdgesOnZoom: true
+            },
+            height: '100%',
+            width: '100%'
+        };
+
+        async function updateGraph() {
+            if (!currentGraph) return;
+            
+            try {
+                const response = await fetch(`./graphs/${currentGraph}.json`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (!data.nodes || !data.edges) {
+                    throw new Error('Invalid data format: missing nodes or edges');
+                }
+
+                if (compareData(data, lastData)) {
+                    lastData = JSON.parse(JSON.stringify(data));
+
+                    // Process nodes to add colors and collect dependencies
+                    const processedNodes = data.nodes.map(node => {
+                        const dependencies = data.edges
+                            .filter(edge => edge.from === node.id)
+                            .map(edge => edge.to);
+                        return {
+                            ...node,
+                            color: getNodeColor(node.explanation),
+                            dependencies: dependencies,
+                            level: calculateNodeLevel(node.id, data.edges)
+                        };
+                    });
+
+                    const nodes = new vis.DataSet(processedNodes);
+                    const edges = new vis.DataSet(data.edges);
+                    const visData = { nodes, edges };
+
+                    if (network) {
+                        network.destroy();
+                        network = null;
+                    }
+
+                    try {
+                        network = new vis.Network(container, visData, options);
+                        console.log('Network created successfully');
+                        
+                        network.on('click', function(params) {
+                            if (params.nodes.length > 0) {
+                                const nodeId = params.nodes[0];
+                                const node = processedNodes.find(n => n.id === nodeId);
+                                if (node) {
+                                    updateNodeInfo(node, processedNodes);
+                                }
+                            }
+                        });
+
+                        network.on('stabilizationProgress', function(params) {
+                            document.getElementById('status').textContent = 
+                                `Optimizing layout: ${Math.round(params.iterations / params.total * 100)}%`;
+                        });
+
+                        network.on('stabilizationIterationsDone', function() {
+                            updateTimestamp();
+                        });
+
+                        network.on('stabilized', function() {
+                            console.log('Graph stabilized');
+                        });
+
+                        console.log('Graph updated successfully');
+                    } catch (error) {
+                        console.error('Error creating network:', error);
+                        document.getElementById('status').textContent = 
+                            `Error creating network: ${error.message}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching graph data:', error);
+                document.getElementById('status').textContent = 
+                    `Error updating graph: ${error.message}`;
+            }
+        }
+
+        function calculateNodeLevel(nodeId, edges, visited = new Set()) {
+            if (visited.has(nodeId)) return 0;
+            visited.add(nodeId);
+            
+            const childEdges = edges.filter(edge => edge.from === nodeId);
+            if (childEdges.length === 0) return 0;
+            
+            const childLevels = childEdges.map(edge => 
+                calculateNodeLevel(edge.to, edges, visited)
+            );
+            return Math.max(...childLevels) + 1;
+        }
+
+        console.log('Starting visualization...');
+        loadAvailableGraphs();
+        setInterval(updateGraph, 1000);
+    </script>
+</body>
+</html> 

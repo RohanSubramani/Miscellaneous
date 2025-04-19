@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": "Bolzano-Weierstrass Theorem (in $\\mathbb{R}$): Statement and Proof",
+      "label": "Bolzano-Weierstrass Theorem (in $\\mathbb{R}$): Statement and Proof",
+      "explanation": "## Theorem (Bolzano-Weierstrass Theorem)\nEvery bounded sequence in $\\mathbb{R}$ has a convergent subsequence.\n\n---\n\n### Outline\nThe proof will rely on the concept of subsequences, the definition of boundedness, and the idea of nested intervals (or equivalently, a diagonalization argument). We will also appeal to the Completeness Axiom for $\\mathbb{R}$, making this theorem an illustration of how completeness distinguishes the real numbers from $\\mathbb{Q}$.\n\n#### Step-by-step proof:\n\n##### Step 1: Let $(x_n)$ be a bounded sequence\nThat is, there exists $M > 0$ so that $|x_n| \\leq M$ for all $n$.\n\n##### Step 2: Bisection Argument (Nested Intervals)\nLet $I_1 = [-M, M]$. Divide $I_1$ into two equal subintervals. At least one of these subintervals contains infinitely many terms of $(x_n)$ (pigeonhole principle).\n\nLabel such a subinterval $I_2$. Next, divide $I_2$ into two halves, and again select the half containing infinitely many terms of $(x_n)$, calling it $I_3$.\n\nContinue this process recursively to form a nested sequence of closed intervals $I_1 \\supset I_2 \\supset I_3 \\supset \\cdots$, each of length $|I_k| = M/2^{k-1}$.\n\n##### Step 3: Choose a Diagonal Subsequence\nFor each $k$, since $I_k$ contains infinitely many terms of $(x_n)$, select $n_k$ such that $n_k > n_{k-1}$ (set $n_1 = 1$) and $x_{n_k} \\in I_k$. This ensures that $x_{n_k} \\in I_k$ for every $k$.\n\n##### Step 4: Nested Interval Property and Completeness\nBy the Nested Interval Property (a consequence of the Completeness Axiom), the sequence of nested intervals has exactly one point of intersection. Label this unique point $x^*$. That is, $x^* \\in \\cap_{k=1}^\\infty I_k$.\n\n##### Step 5: Show the Chosen Subsequence Converges to $x^*$\nGiven $\\varepsilon > 0$, choose $N$ such that $M/2^{N-1} < \\varepsilon$ (possible since $2^{N-1}$ grows arbitrarily large). For all $k \\geq N$, $x_{n_k} \\in I_k$, and each $I_k$ contains $x^*$ and is of length $M/2^{k-1}$ (so both endpoints of $I_k$ are at most $M/2^{k-1}$ from $x^*$).\n\nThus, for $k \\geq N$:\n$$|x_{n_k} - x^*| < M/2^{N-1} < \\varepsilon$$\nThis proves $x_{n_k} \\to x^*$ as $k \\to \\infty$.\n\n---\n\n#### Central Example Problem\nLet $x_n = (-1)^n + \\frac{1}{n}$. Show this sequence has a convergent subsequence and find one such limit.\n\n**Solution:**\n- The sequence is bounded ($|x_n| \\leq 2$ for all $n$).\n- The subsequence $x_{2n} = 1 + \\frac{1}{2n} \\to 1$, and $x_{2n+1} = -1 + \\frac{1}{2n+1} \\to -1$.\n- Thus, both $1$ and $-1$ are subsequential limits. This illustrates the theorem: at least one convergent subsequence exists for any bounded sequence.\n\n---\n\n### Key Points\n- The proof constructs a convergent subsequence by repeatedly bisecting intervals and choosing indices fitting the bisection, exploiting the completeness of $\\mathbb{R}$.\n- The theorem does **not** guarantee that the entire sequence converges, only that **some** subsequence does.\n\n---\n\n### Dependency List\nFor complete understanding, one should be familiar with:\n- Sequences and subsequences\n- Convergence and limits in $\\mathbb{R}$\n- Boundedness\n- Nested Interval Property\n- Completeness Axiom for $\\mathbb{R}$\n- Pigeonhole Principle\n\nSee dependencies for detailed definitions and explanations.",
+      "dependencies": [
+        "Sequences and Subsequences",
+        "Convergence and Limits in $\\mathbb{R}$",
+        "Boundedness",
+        "Nested Interval Property",
+        "Completeness Axiom for $\\mathbb{R}$",
+        "Pigeonhole Principle"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Sequences and Subsequences",
+      "label": "Sequences and Subsequences",
+      "explanation": "## Sequences and Subsequences\n\nA **sequence** in mathematics is an ordered list of elements, typically numbers. Formally, a sequence is a function $x: \\mathbb{N} \\to S$, where $S$ is a set, usually $\\mathbb{R}$ or $\\mathbb{C}$. We write a sequence as $(x_n)_{n=1}^\\infty$, where $x_n$ is the $n$-th element of the sequence.\n\n### Example:\nLet $x_n = \\frac{1}{n}$ for $n = 1, 2, 3, ...$. Then $(x_n) = (1, 1/2, 1/3, 1/4, ...)$.\n\nA **subsequence** is a sequence derived from the original sequence by deleting some elements without changing the order of the remaining elements. Formally, given a sequence $(x_n)$, a subsequence is $(x_{n_k})$ where $n_1 < n_2 < n_3 < \\cdots$ is a strictly increasing sequence of natural numbers.\n\n### Example:\nLet $(x_n) = (1, -1, 1, -1, ...)$.\n- The subsequence $x_{2k} = -1$ for $k \\in \\mathbb{N}$ is $(-1, -1, -1, ...)$.\n- The subsequence $x_{2k-1} = 1$ for $k \\in \\mathbb{N}$ is $(1, 1, 1, ...)$.\n\n**Key Fact:** Every sequence has infinitely many subsequences.\n\n### Central Example Problem\nConsider $(x_n) = (0, 1, 0, 1, 0, 1, ...)$ (alternating 0 and 1).\n- Find two different subsequences and state their forms.\n\n**Solution:**\n1. $(x_{2n}) = (1, 1, 1, ...)$ (all 1's)\n2. $(x_{2n-1}) = (0, 0, 0, ...)$ (all 0's)\n\n### Why Are Subsequences Important?\nSubsequences allow us to explore the limiting behavior of a sequence even when the sequence itself does not converge. For example, in the Bolzano-Weierstrass theorem, we rely on the existence of convergent subsequences for any bounded sequence in $\\mathbb{R}$.\n\n",
+      "dependencies": [],
+      "relevant_for": [
+        "Convergence and Limits in $\\mathbb{R}$",
+        "Boundedness"
+      ]
+    },
+    {
+      "id": "Convergence and Limits in $\\mathbb{R}$",
+      "label": "Convergence and Limits in $\\mathbb{R}$",
+      "explanation": "## Convergence and Limits in $\\mathbb{R}$\n\nA sequence $(x_n)$ of real numbers is said to **converge** to a real number $L$ if, for every $\\varepsilon > 0$, there exists some $N \\in \\mathbb{N}$ so that for all $n \\geq N$, $|x_n - L| < \\varepsilon$. We write $\\lim_{n \\to \\infty} x_n = L$.\n\n- If such an $L$ exists, the sequence is **convergent**.\n- Otherwise, the sequence is **divergent**.\n\n### Visualization:\nAs $n$ goes to infinity, the terms $x_n$ get arbitrarily close to $L$\u2014no matter how small a window ($\\varepsilon$) you choose around $L$, eventually all terms stay in that window.\n\n### Example:\nLet $x_n = 1/n$. For any $\\varepsilon > 0$, pick $N > 1/\\varepsilon$. If $n \\geq N$, then $|1/n - 0| < \\varepsilon$. Thus, $\\lim_{n \\to \\infty} 1/n = 0$.\n\n### Non-example:\n$x_n = (-1)^n$ alternates between 1 and -1 and does not converge.\n\n### Subsequence Convergence:\nA sequence might not converge, but a subsequence can:\n- $x_n = (-1)^n$ has subsequences $x_{2n} = 1$ and $x_{2n+1} = -1$ (both constant sequences), each convergent to 1 and -1, respectively.\n\n### Central Example Problem\nGiven $x_n = (1 + (-1)^n)/n$, find its limit (if any), and limits of some subsequences.\n\n**Solution:**\n- $x_{2n} = 2/2n = 1/n \\to 0$\n- $x_{2n+1} = 0/(2n+1) = 0$\n- Both subsequences converge to 0, so the whole sequence converges to 0.\n\n### Why Does This Matter?\nThe concept of convergence is central to analysis: to study limits, continuity, infinite processes, and more. The Bolzano-Weierstrass theorem is about the existence of convergent subsequences for bounded sequences.\n\n",
+      "dependencies": [
+        "Sequences and Subsequences"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Boundedness",
+      "label": "Boundedness",
+      "explanation": "## Boundedness\n\nA sequence $(x_n)$ of real numbers is **bounded** if there exists a real number $M>0$ such that $|x_n| \\leq M$ for all $n$. That is, the terms of the sequence never exceed $M$ in absolute value.\n\n- **Bounded Above:** There exists $B$ such that $x_n \\leq B$ for all $n$.\n- **Bounded Below:** There exists $A$ such that $x_n \\geq A$ for all $n$.\n\nIf both hold, the sequence is bounded.\n\n### Example:\n$x_n = (-1)^n$ is bounded because $|x_n| = 1$ for all $n$ (so $M=1$ works).\n\n$x_n = n$ is unbounded, as $n$ becomes arbitrarily large.\n\n### Central Example Problem\nLet $x_n = \\sin n$. Is this sequence bounded?\n\n**Solution:**\n$|\\sin n| \\leq 1$ for all $n$, so yes, the sequence is bounded (take $M=1$).\n\n### Importance\nBoundedness is a necessary hypothesis in the Bolzano-Weierstrass theorem; without it, we cannot guarantee convergent subsequences.",
+      "dependencies": [
+        "Sequences and Subsequences"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Nested Interval Property",
+      "label": "Nested Interval Property",
+      "explanation": "## Nested Interval Property\n\nThe **nested interval property** states:\n\n> If $(I_n)$ is a sequence of closed intervals $I_n = [a_n, b_n]$ with $I_1 \\supset I_2 \\supset I_3 \\supset \\cdots$ and lengths $|I_n| = b_n - a_n \\to 0$ as $n \\to \\infty$, then there exists exactly one point $x$ contained in every interval.\n\nIn other words, $\\bigcap_{n=1}^\\infty I_n = \\{x\\}$.\n\n### Example:\nLet $I_n = [0, 1/n]$. Then $I_1 = [0, 1]$, $I_2 = [0, 1/2]$, ... The intersection over all $n$ is $\\{0\\}$.\n\n### Why Does This Hold?\nIt follows from the completeness of the real numbers ($\\mathbb{R}$), which says every decreasing sequence of closed, bounded intervals with lengths tending to zero has a single point in common.\n\n### Use in Bolzano-Weierstrass\nThe proof constructs nested intervals, localizing a sequence's limit point. The existence of a unique intersection point is used to show the convergence of a subsequence.\n\n### Central Example Problem\nGiven $I_n = [1 - 1/n, 1 + 1/n]$, what is $\\bigcap_{n=1}^\\infty I_n$?\n\n**Solution:**\nAs $n \\to \\infty$, both endpoints approach $1$. The only point in all intervals is $\\{1\\}$.\n\n",
+      "dependencies": [
+        "Completeness Axiom for $\\mathbb{R}$"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Completeness Axiom for $\\mathbb{R}$",
+      "label": "Completeness Axiom for $\\mathbb{R}$",
+      "explanation": "## Completeness Axiom for $\\mathbb{R}$\n\nOne of the defining properties that distinguishes the set of real numbers ($\\mathbb{R}$) from the set of rationals ($\\mathbb{Q}$) is **completeness**.\n\n**Completeness Axiom:**\nEvery nonempty set of real numbers that is bounded above has a least upper bound (supremum) in $\\mathbb{R}$.\n\n- If $S \\subset \\mathbb{R}$, $S \\neq \\emptyset$, and $\\exists M$ s.t. $x \\leq M$ for all $x \\in S$, then $\\sup S$ exists and is a real number.\n\n### Consequences:\n- The nested interval property.\n- Every Cauchy sequence in $\\mathbb{R}$ converges in $\\mathbb{R}$.\n- Not true in $\\mathbb{Q}$: e.g., the set of rationals with $x^2 < 2$ has no rational supremum.\n\n### Central Example Problem\nLet $S = \\{x \\in \\mathbb{R}: x^2 < 2\\}$. What is $\\sup S$?\n\n**Solution:**\n- The set is bounded above (e.g., by $2$), and its least upper bound is $\\sqrt{2}$ (a real number, not rational).\n\n### Importance\nCompleteness is used when proving the existence of limit points and convergence theorems such as Bolzano-Weierstrass.\n",
+      "dependencies": [],
+      "relevant_for": [
+        "Nested Interval Property"
+      ]
+    },
+    {
+      "id": "Pigeonhole Principle",
+      "label": "Pigeonhole Principle",
+      "explanation": "## Pigeonhole Principle\n\nThe **pigeonhole principle** states:\nIf $n$ objects are placed into $m$ boxes with $n > m$, then at least one box contains at least two objects.\n\n**Generalization:**\nIf $n$ objects are placed in $m$ boxes, some box contains at least $\\lceil n/m \\rceil$ objects.\n\n### Application to Sequences (Infinite Version):\nGiven a sequence whose terms can only lie in finitely many sets, at least one of these sets contains infinitely many terms.\n\n### Example (with sequences):\nLet $(x_n)$ be a sequence where each $x_n$ is either 0 or 1. The possible values are 0 and 1 (2 boxes). Infinitely many terms, so at least one value occurs infinitely often (say, 0\u2019s). Thus, $(x_{n_k}) = 0$ for infinitely many $k$\u2014a subsequence.\n\n### Central Example Problem\nSuppose the first digit of the decimal expansion of $x_n$ is between 1 and 9. Among $100$ numbers, there must be at least $12$ numbers sharing the same digit, since $100/9 \\approx 11.11$ and $\\lceil 100/9 \\rceil = 12$.\n\n### Importance\nThe principle justifies, in Bolzano-Weierstrass, that infinitely many points must lie in at least one of the bisection intervals at every stage.\n",
+      "dependencies": [],
+      "relevant_for": []
+    }
+  ],
+  "edges": [
+    {
+      "from": "Bolzano-Weierstrass Theorem (in $\\mathbb{R}$): Statement and Proof",
+      "to": "Sequences and Subsequences"
+    },
+    {
+      "from": "Bolzano-Weierstrass Theorem (in $\\mathbb{R}$): Statement and Proof",
+      "to": "Convergence and Limits in $\\mathbb{R}$"
+    },
+    {
+      "from": "Convergence and Limits in $\\mathbb{R}$",
+      "to": "Sequences and Subsequences"
+    },
+    {
+      "from": "Bolzano-Weierstrass Theorem (in $\\mathbb{R}$): Statement and Proof",
+      "to": "Boundedness"
+    },
+    {
+      "from": "Boundedness",
+      "to": "Sequences and Subsequences"
+    },
+    {
+      "from": "Bolzano-Weierstrass Theorem (in $\\mathbb{R}$): Statement and Proof",
+      "to": "Nested Interval Property"
+    },
+    {
+      "from": "Nested Interval Property",
+      "to": "Completeness Axiom for $\\mathbb{R}$"
+    },
+    {
+      "from": "Bolzano-Weierstrass Theorem (in $\\mathbb{R}$): Statement and Proof",
+      "to": "Completeness Axiom for $\\mathbb{R}$"
+    },
+    {
+      "from": "Bolzano-Weierstrass Theorem (in $\\mathbb{R}$): Statement and Proof",
+      "to": "Pigeonhole Principle"
+    }
+  ]
+}

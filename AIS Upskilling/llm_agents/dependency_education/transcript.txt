@@ -1,0 +1,261 @@
+[
+    {
+        "role": "system",
+        "content": "You are a helpful assistant that makes educational dependency graphs. A key feature of this job is that you should make highly detailed dependency graphs. As a heuristic, you should aim for at least 10 properly explained nodes and at least 3 layers of dependencies. The example problems and solutions you provide within the explanation should be detailed, with no skipped steps except those justified in detail by a dependency. You should finish these 10 or more explanations on your own, without asking the user for help or confirmation."
+    },
+    {
+        "role": "user",
+        "content": "Explain the backdoor criterion to me with a dependency graph"
+    },
+    {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+            {
+                "id": "call_1599h3e5WaeJVExqg6HCFvPV",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\":\"Backdoor Criterion\",\"detailed_explanation\":\"The backdoor criterion is a foundational concept in causal inference that provides a graphical condition ensuring that we can estimate the causal effect of a variable X on another variable Y using observational data. It tells us when it is possible to control for a set of variables (conditioning) to block all spurious backdoor paths from X to Y, thereby allowing the identification of the true causal effect from X to Y.\\n\\nDefinition (Pearl, 1995):\\nA set of variables Z satisfies the *backdoor criterion* relative to an ordered pair of variables (X, Y) in a directed acyclic graph (DAG) if:\\n1. No node in Z is a descendant of X.\\n2. Z blocks every path between X and Y that contains an arrow into X (i.e., every backdoor path from X to Y).\\n\\n**Interpretation:**\\n- \\\"Backdoor paths\\\" are paths from X to Y that start with an arrow pointing into X. These represent potential sources of confounding—variables that affect both X and Y.\\n- By blocking such paths (through conditioning on specific variables), we can estimate the causal effect of X on Y as if we had performed an intervention, under the assumption that the graph accurately represents the data generating process.\\n\\n**Example:**\\nSuppose we have the following DAG:\\n\\nU → X → Y\\nU → Y\\n\\nHere, U is an unobserved confounder that affects both X and Y. The path U → X → Y represents the causal effect of X on Y, but the path U → Y is a backdoor path that creates confounding.\\n\\n- The only backdoor path from X to Y is X ← U → Y (i.e., via U).\\n- If U is observed, conditioning on U blocks this backdoor path, so Z = {U} satisfies the backdoor criterion.\\n- If U is unobserved, then the backdoor criterion fails, and we cannot estimate the causal effect using observational data alone.\\n\\n**General Steps to Check Backdoor Criterion:**\\n1. Draw the DAG of the problem.\\n2. List all backdoor paths from X to Y.\\n3. Identify a set Z such that:\\n   - Z contains no descendants of X.\\n   - Z blocks all backdoor paths (using the rules of d-separation).\\n\\n**Formal Statement:**\\nIf Z satisfies the backdoor criterion for (X, Y), then the interventional distribution $$P(Y \\\\mid do(X))$$ can be computed from observational data as:\\n$$P(Y \\\\mid do(X)) = \\\\sum_z P(Y \\\\mid X, Z=z) P(Z=z)$$\\n\\nThus, the backdoor criterion is central to using observational data for causal effect estimation in structural causal models.\",\"dependencies\":[\"Directed Acyclic Graphs (DAGs)\",\"Causal Inference\",\"Do-Calculus\",\"d-Separation\",\"Confounding and Confounders\",\"Conditional Probability and Conditioning\",\"Structural Causal Models (SCMs)\",\"Paths in Graphs\",\"Blocking in Graphs\",\"Interventional vs Observational Distributions\"]}"
+                }
+            }
+        ]
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_1599h3e5WaeJVExqg6HCFvPV",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Backdoor Criterion' created/updated with all dependencies.\"}"
+    },
+    {
+        "role": "assistant",
+        "content": ""
+    },
+    {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+            {
+                "id": "call_kGxBSUpmwaUYcAEkmXmhSe3k",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Directed Acyclic Graphs (DAGs)\", \"detailed_explanation\": \"A Directed Acyclic Graph (DAG) is a graph composed of nodes (vertices) and directed edges (arrows), such that there are no cycles — that is, it is impossible to start at some node and follow a consistently-directed sequence of edges that eventually loops back to the starting node. DAGs are a foundational tool in causal inference, as they can visually and mathematically encode assumptions about causal relationships among random variables.\\n\\nFormally, a DAG consists of:\\n- A set of nodes, each representing a variable.\\n- A set of directed edges (arrows), where an edge from node A to node B denotes that A is a direct cause of B (or, more generally, that A directly influences B).\\n- Acyclicity: There are no directed cycles (for any node, there is no directed path originating from and returning to itself).\\n\\nExample:\\nConsider variables Smoking (S), Tar in Lungs (T), and Lung Cancer (C). The DAG encoding the natural causal assumptions might be:\\nS → T → C\\nS → C\\n\\nHere, 'Smoking' causes 'Tar in Lungs', which causes 'Lung Cancer', and 'Smoking' may also directly cause 'Lung Cancer'.\\n\\nKey Uses in Causal Inference:\\n- DAGs identify plausible causal and non-causal relationships.\\n- They help enumerate adjustment sets for identifying causal effects (e.g., backdoor criterion).\\n- They clarify independence relationships via graphical tools like d-separation.\\n\\nBasic DAG terminology relies on understanding nodes, edges, paths, directedness, and acyclicity.\", \"dependencies\": [\"Graphs\", \"Graph Terminology\"]}"
+                }
+            },
+            {
+                "id": "call_O5QIwahkw3dFY46KLxEF4KqN",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Causal Inference\", \"detailed_explanation\": \"Causal inference is the process of drawing conclusions about causal relationships from data. This is fundamentally different from drawing associations or correlations, in that it aims to answer questions of the form: \\\"What is the effect of X on Y?\\\" — including in hypothetical or interventional scenarios that may not be observed directly.\\n\\nMotivating Example:\\nSuppose we're interested in the effect of a new drug (X) on recovery from an illness (Y). A simple association (correlation) might show X and Y are related, but this might be due to confounding factors (e.g., healthier people choose to take the drug). Causal inference seeks to distinguish correlation from causation — that is, whether changing X truly changes Y.\\n\\nCore elements and tasks in causal inference:\\n- Causal effect estimation: Determining how much changing a treatment (X) would change an outcome (Y), e.g., by estimating $P(Y | do(X))$.\\n- Confounding control: Adjusting for (conditioning on) other variables that could create spurious associations between X and Y.\\n- Use of graphical models (like DAGs) and formal calculus (like do-calculus) to guide the analysis.\\n\\nThere are two main frameworks:\\n1. Potential outcomes / Rubin Causal Model (counterfactuals).\\n2. Structural causal models (SCMs), fundamental to the graphical approach (including the backdoor criterion).\\n\\nDependencies include probability, statistics, basics of experiments, and graphical models.\", \"dependencies\": [\"Probability Theory\", \"Statistics\", \"Scientific Experimentation\"]}"
+                }
+            },
+            {
+                "id": "call_M0Tw3KILFi4aLQ0eOmUBwcIc",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Do-Calculus\", \"detailed_explanation\": \"Do-calculus is a collection of three rules developed by Judea Pearl that allow us to reason mathematically (symbolically) about causal effects in graphical models. It provides a systematic way to transform interventional probabilities — expressions involving the do-operator (e.g., $P(Y|do(X))$) — into terms of observable (non-experimental) quantities, given a causal diagram (DAG).\\n\\nMotivation: Causal effects are encoded as $P(Y|do(X))$ — that is, the distribution of Y if we were to intervene and set X to a particular value, rather than simply observe X. In many cases, we cannot physically conduct such interventions but want to compute their effects from observational data.\\n\\nDo-calculus consists of three fundamental rules (omitted here for brevity) that rely on concepts like d-separation and blocking and allow for the systematic simplification or transformation of probabilistic expressions involving interventions.\\n\\nExample:\\nSuppose Z blocks all backdoor paths from X to Y in a DAG (see backdoor criterion). By do-calculus, this implies:\\n$$P(Y|do(X)) = \\\\sum_z P(Y|X, Z=z)P(Z=z)$$\\n\\nKey dependencies: understanding the do-operator, d-separation, conditional probability, and the structure of DAGs.\", \"dependencies\": [\"Do-Operator\", \"d-Separation\", \"Directed Acyclic Graphs (DAGs)\", \"Conditional Probability and Conditioning\"]}"
+                }
+            },
+            {
+                "id": "call_dzb2FJVShlisYzelbVmCOyrO",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"d-Separation\", \"detailed_explanation\": \"d-Separation is a key graphical criterion in the study of DAGs (Directed Acyclic Graphs) that allows us to read off conditional independence relations from the graph structure. Two sets of nodes (variables) A and B are said to be d-separated by set Z if, in the DAG, all paths from any node in A to any node in B are \\\"blocked\\\" by Z according to precise graphical rules.\\n\\nBlocking rules:\\nA path between nodes is said to be blocked (made inactive) by a set Z if at least one of the following holds for every path:\\n- There exists a non-collider node on the path that is in Z.\\n- There exists a collider node on the path (a node where two arrows head in) such that neither that node nor any of its descendants is in Z.\\n\\nIf every path between nodes in A and B is blocked by Z, then A and B are d-separated by Z. Otherwise, they are d-connected given Z.\\n\\nExample:\\nSuppose the following causal structure: A → B ← C.\\n- A and C are marginally independent (no paths connect them without conditioning).\\n- If we condition on B (the collider), then A and C become dependent, illustrating the “explaining away” phenomenon.\\n\\nKey dependencies: DAGs, paths in graphs, collider and non-collider concepts.\", \"dependencies\": [\"Directed Acyclic Graphs (DAGs)\", \"Paths in Graphs\"]}"
+                }
+            },
+            {
+                "id": "call_LPhFDq0JKE2EgpskI24AxrYw",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Confounding and Confounders\", \"detailed_explanation\": \"A confounder is a variable that influences both the treatment (or exposure) and the outcome in a study, potentially creating a spurious association between them if not properly accounted for. Confounding is a central challenge in causal inference because it can lead to incorrect conclusions about the relationship between variables.\\n\\nDefinition:\\n- Confounding occurs when a third variable (the confounder) affects both the treatment/exposure (X) and the outcome (Y), making it unclear whether changes in Y are due to changes in X or the confounder.\\n\\nGraphical view:\\n- In a DAG, a confounder forms a backdoor path from X to Y (e.g., X <- U -> Y, where U is the confounder). \\n\\nExample:\\nSuppose we are studying whether exercise (X) prevents heart disease (Y):\\n- Age (U) influences both likelihood to exercise and risk of heart disease\\n- Unless age is measured and adjusted for, the association between exercise and heart disease will be confounded by age.\\n\\nKey points:\\n- Confounding can be controlled by randomization, stratification, matching, or statistical adjustment (e.g., regression, or using the backdoor criterion in DAGs).\\n- Identification of confounders depends on the assumed causal structure (DAG).\\n\\nRequires: understanding of causality, DAGs, and paths in graphs.\", \"dependencies\": [\"Causal Inference\", \"Directed Acyclic Graphs (DAGs)\", \"Paths in Graphs\"]}"
+                }
+            },
+            {
+                "id": "call_67OQiu1Nwp6jt7x3BByvyer9",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Conditional Probability and Conditioning\", \"detailed_explanation\": \"Conditional probability quantifies the probability of one event occurring given that some other event is known to have occurred. It is denoted $P(A|B)$ and is defined as:\\n\\\\[\\nP(A|B) = \\\\frac{P(A \\\\cap B)}{P(B)}, \\\\quad \\\\text{provided } P(B) > 0\\n\\\\]\\n\\n\\\"Conditioning\\\" refers to the process of updating the probability of events in light of new information (B).\\n\\nIn causal inference and graphical models, conditioning (on variables Z) is frequently used to block paths (e.g., via d-separation), adjust for confounders, or estimate conditional distributions needed for the backdoor criterion.\\n\\nExample:\\nIf the probability that it rains (A) and the grass is wet (B) is $P(A \\\\cap B) = 0.1$, and the probability that the grass is wet is $P(B) = 0.2$, then:\\n\\n\\\\[\\nP(A|B) = \\\\frac{0.1}{0.2} = 0.5\\n\\\\]\\n\\nKey dependencies: probability theory, basic set theory, Bayes' rule.\", \"dependencies\": [\"Probability Theory\"]}"
+                }
+            },
+            {
+                "id": "call_8WaN6iWHnuk9xn3aJNKViR0Z",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Structural Causal Models (SCMs)\", \"detailed_explanation\": \"A Structural Causal Model (SCM) is a formal mathematical framework for representing causal relationships among variables. SCMs form the backbone of many modern approaches to causal inference, including the graphical (DAG-based) framework.\\n\\nAn SCM consists of:\\n1. A set of variables (endogenous and exogenous).\\n2. A set of structural equations, one for each endogenous variable, describing how it is generated from its parents (possibly including error/noise/latent variables as exogenous variables).\\n3. A directed acyclic graph (DAG) that represents the relationships: there is an arrow from A to B in the DAG if A appears in the equation for B.\\n\\nExample:\\nSuppose variables U, X, and Y:\\n- X = f_X(U_X)\\n- Y = f_Y(X, U_Y)\\n\\nHere, each variable is a deterministic (or stochastic) function of its parents, plus noise. The DAG for this SCM has arrows: U → X → Y.\\n\\nThe SCM framework allows us to define interventions using the do-operator, and to distinguish between observational and interventional distributions.\", \"dependencies\": [\"Causal Inference\", \"Directed Acyclic Graphs (DAGs)\"]}"
+                }
+            },
+            {
+                "id": "call_7xWfMs1meiHXmOSjpjZ4tjfF",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Paths in Graphs\", \"detailed_explanation\": \"A path in a graph is a sequence of nodes such that each consecutive pair is connected by an edge (which, in directed graphs, must respect the direction of edges if a directed path is required). Paths are a key primitive in graph theory and are heavily used in causal inference and related fields to reason about transmission of information, influence, or association among variables.\\n\\nTypes of paths:\\n1. Directed path: All edges follow the direction of arrows (A → B → C is a directed path from A to C).\\n2. Undirected path: Ignores the direction of edges.\\n3. Backdoor path: Any undirected path from X to Y that starts with an arrow into X.\\n\\nIn DAGs, paths are crucial for:\\n- Understanding direct and indirect influences.\\n- Finding backdoor (and frontdoor) paths.\\n- Reasoning about conditional independence via d-separation.\\n\\nExample:\\nGiven the DAG A → B ← C, the sequence A → B ← C is a path of length 2 between A and C.\\n\\nDependencies: basic graph theory.\", \"dependencies\": [\"Graphs\"]}"
+                }
+            },
+            {
+                "id": "call_Q1yPdiCxFQ1eAPtDTdVoS0qK",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Blocking in Graphs\", \"detailed_explanation\": \"Blocking in the context of graphical models refers to the process by which sets of variables \\\"block\\\" or \\\"cut off\\\" paths in a graph, such that no association can flow between two variables (or sets of variables), conditional on those blocking variables. It is formalized as part of the d-separation criterion.\\n\\nA path is blocked (inactive) by a set of nodes Z if at least one of the following is true:\\n1. The path contains a chain $A \\\\rightarrow B \\\\rightarrow C$ or a fork $A \\\\leftarrow B \\\\rightarrow C$ and the middle node (B) is in Z.\\n2. The path contains a collider (i.e., $A \\\\rightarrow B \\\\leftarrow C$) and neither B nor any of its descendants is in Z.\\n\\nWhen all paths connecting two variables are blocked by Z, those two variables are d-separated (conditionally independent, given Z).\\n\\nExample:\\nIf you have the graph A → B → C, conditioning on B blocks the path from A to C.\\n\\nKey: Blocking is a graphical generalization of how conditioning affects dependency relations among random variables.\\n\\nDependencies: d-separation, paths in graphs.\", \"dependencies\": [\"d-Separation\", \"Paths in Graphs\"]}"
+                }
+            },
+            {
+                "id": "call_8kMq63OaZEk21cRdESDj89J7",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Interventional vs Observational Distributions\", \"detailed_explanation\": \"In causal inference, a sharp distinction is made between observational distributions (what we see in data) and interventional distributions (what would happen if we forcibly set some variable to a certain value).\\n\\n- Observational Distribution: $P(Y|X=x)$ – the probability of Y given X takes the value x, as observed in nature.\\n- Interventional Distribution: $P(Y|do(X=x))$ – the probability of Y if we intervene to set X to x, breaking any natural causes of X.\\n\\nWhy does this distinction matter?\\n- Observational data captures association, not necessarily causation.\\n- Interventional queries are central to causal questions (e.g., will enforcing a policy change X causally affect Y?).\\n\\nExample:\\nSuppose X = \\\"Smoking\\\" and Y = \\\"Lung Cancer\\\". Observationally, $P(Y|X)$ can be estimated from population data, but $P(Y|do(X))$ answers what would happen to Y if we could force everyone to smoke or not smoke, regardless of their background.\\n\\nDependencies: do-operator, probability theory.\", \"dependencies\": [\"Do-Operator\", \"Probability Theory\"]}"
+                }
+            }
+        ]
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_kGxBSUpmwaUYcAEkmXmhSe3k",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Directed Acyclic Graphs (DAGs)' created/updated with all dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_O5QIwahkw3dFY46KLxEF4KqN",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Causal Inference' created/updated with all dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_M0Tw3KILFi4aLQ0eOmUBwcIc",
+        "content": "{\"status\": \"partial_success\", \"message\": \"Explainer 'Do-Calculus' created/updated, but some dependencies were rejected to prevent cycles: Directed Acyclic Graphs (DAGs)\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_dzb2FJVShlisYzelbVmCOyrO",
+        "content": "{\"status\": \"partial_success\", \"message\": \"Explainer 'd-Separation' created/updated, but some dependencies were rejected to prevent cycles: Directed Acyclic Graphs (DAGs)\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_LPhFDq0JKE2EgpskI24AxrYw",
+        "content": "{\"status\": \"partial_success\", \"message\": \"Explainer 'Confounding and Confounders' created/updated, but some dependencies were rejected to prevent cycles: Causal Inference, Directed Acyclic Graphs (DAGs)\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_67OQiu1Nwp6jt7x3BByvyer9",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Conditional Probability and Conditioning' created/updated with all dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_8WaN6iWHnuk9xn3aJNKViR0Z",
+        "content": "{\"status\": \"partial_success\", \"message\": \"Explainer 'Structural Causal Models (SCMs)' created/updated, but some dependencies were rejected to prevent cycles: Causal Inference, Directed Acyclic Graphs (DAGs)\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_7xWfMs1meiHXmOSjpjZ4tjfF",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Paths in Graphs' created/updated with all dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_Q1yPdiCxFQ1eAPtDTdVoS0qK",
+        "content": "{\"status\": \"partial_success\", \"message\": \"Explainer 'Blocking in Graphs' created/updated, but some dependencies were rejected to prevent cycles: d-Separation, Paths in Graphs\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_8kMq63OaZEk21cRdESDj89J7",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Interventional vs Observational Distributions' created/updated with all dependencies.\"}"
+    },
+    {
+        "role": "assistant",
+        "content": ""
+    },
+    {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+            {
+                "id": "call_e457Oj4dNVWY3CfzuMjIsgzG",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Graphs\", \"detailed_explanation\": \"A graph is a mathematical structure used to model pairwise relations between objects. It consists of two main components:\\n- A set of nodes (vertices), usually representing entities.\\n- A set of edges (links), representing connections or relationships between the nodes.\\n\\nGraphs come in various types:\\n- Undirected: Edges have no direction (e.g., A—B).\\n- Directed: Edges are ordered pairs and have a direction (e.g., A → B).\\n- Weighted: Edges carry numeric values (weights).\\n- Unweighted: Edges carry no weights.\\n\\nGraphs are foundational in computer science, mathematics, and applications such as causal inference, where they encode relationships between variables.\", \"dependencies\": []}"
+                }
+            },
+            {
+                "id": "call_s3rSgvfJ3vqazeJQfLy6DfwR",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Graph Terminology\", \"detailed_explanation\": \"Graph terminology includes foundational concepts needed to describe and study graphs:\\n\\n- Vertex (Node): A fundamental unit or point in the graph, often representing an entity or variable.\\n- Edge (Link): A connection between two vertices, can be directed (ordered) or undirected (unordered).\\n- Path: A sequence of vertices connected by edges.\\n- Directed Edge: An arrow from one node to another, indicating direction.\\n- Degree: The number of edges connected to a node.\\n- Adjacent: Two nodes are adjacent if they are connected by an edge.\\n- Parent/Child: In directed graphs, if there is an edge from A to B, A is the parent of B and B is the child of A.\\n- Cycle: A path that starts and ends at the same node without repeating an edge or node (except start/end).\\n- Acyclic: Contains no cycles.\\n\\nThis terminology is essential for understanding more advanced graph concepts, including Directed Acyclic Graphs (DAGs).\", \"dependencies\": []}"
+                }
+            },
+            {
+                "id": "call_OEBIQchXdOQKmFDyQhGO1pvm",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Probability Theory\", \"detailed_explanation\": \"Probability theory is the branch of mathematics concerned with the analysis of random phenomena. The key objects in probability theory are random variables, events, and probability distributions.\\n\\nCore concepts include:\\n- Sample space: The set of all possible outcomes.\\n- Event: A subset of the sample space.\\n- Probability: A measure from 0 to 1 assigned to events, with 1 for the whole sample space.\\n- Random variable: A variable whose possible values are numerical outcomes of a random process.\\n- Probability distribution: A function assigning probabilities to possible values of a random variable.\\n\\nKey rules:\\n1. Probability of the sample space is 1.\\n2. Probability of disjoint events adds.\\n3. Conditional probability, independence, expectation, and variance are also core.\\n\\nExample: In a fair coin toss, $P(\\\\text{Heads}) = 0.5$.\\n\\nProbability theory is foundational for statistics, statistical inference, and causal inference.\", \"dependencies\": []}"
+                }
+            },
+            {
+                "id": "call_6Tn8sXbx7Ot2npVrxIqf5JeW",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Statistics\", \"detailed_explanation\": \"Statistics is the science of collecting, analyzing, interpreting, presenting, and organizing data. It provides tools for describing variability, testing hypotheses, and making data-driven decisions.\\n\\nKey elements:\\n- Descriptive statistics: Summarizing data with measures like mean, variance, quantiles.\\n- Inferential statistics: Drawing conclusions from data samples about populations, usually via estimation or hypothesis testing.\\n- Probability distributions, sampling, estimation (point and interval), and hypothesis testing are core. Methods include t-tests, regression, ANOVA, and more.\\n- Forms the backbone for more advanced inferential concepts such as causal inference and model-based reasoning.\\n\\nExample: The sample mean $\\\\bar{x}$ is an unbiased estimator of the population mean $\\\\mu$.\\n\\nRequires: knowledge of probability theory.\", \"dependencies\": [\"Probability Theory\"]}"
+                }
+            },
+            {
+                "id": "call_IvFrU2RbiJ5b60FFIiONhk7P",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Scientific Experimentation\", \"detailed_explanation\": \"Scientific experimentation is the systematic process of manipulating one or more variables to observe the effect on other variables, while attempting to control for confounding factors. It is central to understanding causal relationships.\\n\\nKey ideas:\\n- Treatment variable(s): Deliberately manipulated by the experimenter.\\n- Outcome variable(s): Measured as responses to the treatment.\\n- Control group: Not exposed to the treatment; used as a baseline.\\n- Randomization: Random assignment eliminates systemic confounding.\\n- Replication: Repeating experiments increases reliability.\\n\\nExample: In a clinical trial testing a new drug, patients are randomized to receive either the drug (treatment) or a placebo (control), and the difference in recovery rates is analyzed.\\n\\nExperimentation provides a foundation for distinguishing causal from non-causal associations, setting the stage for formal causal inference.\", \"dependencies\": []}"
+                }
+            },
+            {
+                "id": "call_UalpwzWr77nK7BMpc0itmVNs",
+                "type": "function",
+                "function": {
+                    "name": "create_explainer",
+                    "arguments": "{\"explainer_title\": \"Do-Operator\", \"detailed_explanation\": \"The do-operator, denoted as $do(X=x)$, is a formal mathematical notation describing interventions in causal models. In a graphical model or structural causal model, $do(X=x)$ represents the action of forcibly setting the variable X to value x, regardless of its natural causes, thus simulating an intervention.\\n\\nProperties:\\n- $P(Y|do(X=x))$ represents the distribution of variable Y when we intervene to set X=x, as opposed to simply observing X = x.\\n- This breaks all arrows into X in the DAG.\\n\\nExample:\\nIn a DAG: U → X → Y, $P(Y|do(X=x))$ means \\\"the distribution of Y if X is set to x, breaking the normal influence of U on X\\\".\\n\\nKey difference: $P(Y|do(X))$ (interventional) is conceptually and numerically distinct from $P(Y|X)$ (observational) when confounding is present.\\n\\nUnderstanding the do-operator is fundamental to the do-calculus, backdoor criterion, and causal inference at large.\", \"dependencies\": []}"
+                }
+            }
+        ]
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_e457Oj4dNVWY3CfzuMjIsgzG",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Graphs' created/updated without dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_s3rSgvfJ3vqazeJQfLy6DfwR",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Graph Terminology' created/updated without dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_OEBIQchXdOQKmFDyQhGO1pvm",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Probability Theory' created/updated without dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_6Tn8sXbx7Ot2npVrxIqf5JeW",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Statistics' created/updated with all dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_IvFrU2RbiJ5b60FFIiONhk7P",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Scientific Experimentation' created/updated without dependencies.\"}"
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_UalpwzWr77nK7BMpc0itmVNs",
+        "content": "{\"status\": \"success\", \"message\": \"Explainer 'Do-Operator' created/updated without dependencies.\"}"
+    },
+    {
+        "role": "assistant",
+        "content": ""
+    }
+]

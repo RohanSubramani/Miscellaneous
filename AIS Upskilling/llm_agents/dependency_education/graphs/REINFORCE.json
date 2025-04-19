@@ -1,0 +1,186 @@
+{
+  "nodes": [
+    {
+      "id": "REINFORCE Algorithm",
+      "label": "REINFORCE Algorithm",
+      "explanation": "The REINFORCE algorithm is a classic policy gradient method in reinforcement learning, introduced by Ronald Williams in 1992. It is used to optimize parameterized policies with respect to the expected return by following the gradient ascent direction. \n\n## Objective\n\nThe main objective in reinforcement learning is to maximize the expected return $J(\\theta)$ of a policy $\\pi_\\theta(a|s)$ parametrized by $\\theta$:\n\n\\[\nJ(\\theta) = \\mathbb{E}_{\\pi_\\theta}\\left[ R \\right]\n\\]\nwhere $R = \\sum_{t=0}^{T} \\gamma^t r_t$ is the total discounted reward.\n\n## Policy Gradient\n\nThe policy gradient theorem provides a way to compute the gradient of $J(\\theta)$ with respect to the parameters $\\theta$:\n\n\\[\n\\nabla_\\theta J(\\theta) = \\mathbb{E}_{\\pi_\\theta} \\left[ \\sum_{t=0}^T \\nabla_\\theta \\log \\pi_\\theta(a_t|s_t) R_t \\right]\n\\]\n\nIn practice, this expectation is estimated using sampled trajectories.\n\n## REINFORCE Algorithm Steps\n\n1. **Collect Trajectories:**\n   - Run the current policy $\\pi_\\theta$ on the environment, collect states $(s_t)$, actions $(a_t)$, and rewards $(r_t)$ for each time step in an episode.\n2. **Compute Returns:**\n   - For each timestep $t$, compute the return $R_t = \\sum_{k=t}^T \\gamma^{k-t} r_k$.\n3. **Estimate Gradient:**\n   - For each $t$, calculate the policy gradient contribution $\\nabla_\\theta \\log \\pi_\\theta(a_t|s_t) R_t$.\n4. **Update Parameters:**\n   - Update $\\theta$ using gradient ascent, typically with stochastic gradient ascent:\n   \\[\n   \\theta \\leftarrow \\theta + \\alpha \\nabla_\\theta J(\\theta)\n   \\]\n   where $\\alpha$ is the learning rate.\n\n## Pseudocode\n\n```\nfor episode = 1 to M do\n  sample a trajectory (s_0, a_0, r_0, ..., s_T, a_T, r_T) using policy \\pi_\\theta\n  for t = 0 to T do\n    compute return: R_t = sum_{k=t}^T \\gamma^{k-t} r_k\n    accumulate gradient: g_t = \\nabla_\\theta \\log \\pi_\\theta(a_t|s_t) R_t\n  end for\n  update \\theta: \\theta \\leftarrow \\theta + \\alpha \\sum_t g_t\nend for\n```\n\n## Example Problem\n\nSuppose we have a trivial environment:\n- States: $s \\in \\{1\\}$ (just one state)\n- Actions: $a \\in \\{0, 1\\}$\n- Policy: $\\pi_\\theta(a|s=1) = \\text{Softmax}(\\theta_a)$\n- Reward: $r=1$ if $a=1$, $r=0$ otherwise, only one time step.\n\nAssume $\\theta = (\\theta_0, \\theta_1)$ are initial policy logits. Suppose $\\theta = (0, 0)$ so both actions are equally likely.\n\n1. Sample $a$ from Softmax$(0,0)$: $P(a=1) = 0.5$\n2. Suppose $a=1$, get reward $r=1$.\n3. Compute $\\nabla_\\theta \\log \\pi_\\theta(a|s)$:\n   - Softmax for $a=1$: $\\pi_\\theta(1|1) = 0.5$\n   - $\\nabla_{\\theta_1} \\log \\pi_\\theta(1|1) = 1-0.5 = 0.5$\n   - $\\nabla_{\\theta_0} \\log \\pi_\\theta(1|1) = 0-0.5 = -0.5$\n4. Weighted by $R_0=1$, the gradient is $(g_0, g_1)=(-0.5, 0.5)$.\n5. Update: $\\theta_k \\leftarrow \\theta_k + \\alpha g_k$\n\nThis will increase $\\theta_1$ and decrease $\\theta_0$, making action $a=1$ more likely in the future\u2014which is what we want!\n\n## Notes\n- REINFORCE has high variance in its gradient estimates. Baseline methods like subtracting a state-dependent value can help reduce this variance.\n- The method works with both discrete and continuous action spaces (with respective probability or density functions).\n\n## Dependencies\nTo thoroughly understand REINFORCE, students should be comfortable with:\n- Markov Decision Processes (MDP)\n- Policy parametrization and softmax policy\n- Expected return and discounted rewards\n- Gradient estimation and log-likelihood trick\n- Monte Carlo sampling in RL\n\nThese dependencies are detailed in layers to follow.",
+      "dependencies": [
+        "Markov Decision Processes (MDP)",
+        "Policy Parametrization and Softmax Policy",
+        "Expected Return and Discounted Rewards",
+        "Gradient Estimation and Log-Likelihood Trick",
+        "Monte Carlo Sampling in Reinforcement Learning"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Markov Decision Processes (MDP)",
+      "label": "Markov Decision Processes (MDP)",
+      "explanation": "A Markov Decision Process (MDP) is a mathematical framework for modeling decision-making in situations where outcomes are partly random and partly under the control of a decision maker. An MDP is defined by a tuple $(S, A, P, R, \\gamma)$:\n\n- $S$: a finite set of states\n- $A$: a finite set of actions\n- $P(s'|s,a)$: transition probability. The probability of moving to state $s'$ from state $s$ when action $a$ is taken\n- $R(s,a)$: reward function. The expected reward received after taking action $a$ at state $s$\n- $\\gamma \\in [0,1)$: discount factor, weighting the importance of future rewards\n\nThe agent interacts with the environment as follows:\n1. It observes the current state $s_t$.\n2. It chooses an action $a_t$.\n3. The system transitions to a new state $s_{t+1} \\sim P(\\cdot|s_t,a_t)$.\n4. The agent receives reward $r_t = R(s_t,a_t)$.\n\nThe goal is to choose actions, according to a policy $\\pi$, to maximize the expected sum of discounted rewards.\n\nExample:\nSuppose $S = \\{A, B\\}$, $A = \\{left, right\\}$, reward for going right from A is $+1$, left is $0$, and all transitions deterministic. The optimal policy is always to go right from A.\n\nUnderstanding MDPs is foundational to all reinforcement learning.",
+      "dependencies": [],
+      "relevant_for": [
+        "REINFORCE Algorithm",
+        "Transition Probability in MDPs",
+        "State Value and Action Value Functions"
+      ]
+    },
+    {
+      "id": "Policy Parametrization and Softmax Policy",
+      "label": "Policy Parametrization and Softmax Policy",
+      "explanation": "A policy $\\pi$ defines the behavior of an agent by specifying the probability of taking action $a$ when in state $s$. In policy-based reinforcement learning, the policy is often parameterized by a vector $\\theta$.\n\n### Parameterized Policy\nA policy $\\pi_\\theta(a|s)$ is a probability distribution over actions given the state, controlled by parameters $\\theta$ (often the weights of a neural network, or real-valued vectors).\n\n### Softmax Policy (for Discrete Actions)\nFor discrete action spaces, a popular choice is the softmax (or Boltzmann) policy:\n\n\\[\n\\pi_\\theta(a|s) = \\frac{\\exp(f_\\theta(s, a))}{\\sum_{a'} \\exp(f_\\theta(s, a'))}\n\\]\nwhere $f_\\theta(s, a)$ is a score (e.g., linear or neural net output) for $(s, a)$.\n\n#### Example:\nSuppose $f_\\theta(s, 0) = \\theta_0, f_\\theta(s, 1) = \\theta_1$. Then:\n\\[\n\\pi_\\theta(1|s) = \\frac{e^{\\theta_1}}{e^{\\theta_0} + e^{\\theta_1}}\n\\]\nIf $\\theta_0 = \\theta_1 = 0$, both actions are equally likely.\n\nUnderstanding policy parameterization is critical for implementing and updating stochastic policies.",
+      "dependencies": [],
+      "relevant_for": [
+        "REINFORCE Algorithm",
+        "Parameterization of Stochastic Policies",
+        "Gradient of Log-Probability (Score Function)"
+      ]
+    },
+    {
+      "id": "Expected Return and Discounted Rewards",
+      "label": "Expected Return and Discounted Rewards",
+      "explanation": "In reinforcement learning, the expected return quantifies the objective the agent strives to maximize. Typically, the return from timestep $t$ is defined as the sum of future rewards, often discounted:\n\n\\[\nG_t = \\sum_{k=0}^{\\infty} \\gamma^k r_{t+k}\n\\]\nwhere $0 \\leq \\gamma < 1$ is the discount factor, and $r_{t+k}$ is the reward received $k$ steps after $t$.\n\n- If $\\gamma=0$, only immediate rewards matter.\n- As $\\gamma \\to 1$, far-future rewards are weighted more equally.\n\nExpected return $J(\\theta)$ for a policy $\\pi_\\theta$ is:\n\\[\nJ(\\theta) = \\mathbb{E}_{\\pi_\\theta} [G_0]\n\\]\nThis expectation is over trajectories (sequences of states, actions, and rewards) generated by following $\\pi_\\theta$.\n\nExample:\nSuppose rewards: $r_0=1$, $r_1=2$, $r_2=3$, $\\gamma = 0.9$. Then:\n\\[\nG_0 = 1 + 0.9 \\times 2 + 0.9^2 \\times 3 = 1 + 1.8 + 2.43 = 5.23\n\\]\nDiscounted returns are central to how policies are evaluated and compared.",
+      "dependencies": [],
+      "relevant_for": [
+        "REINFORCE Algorithm",
+        "State Value and Action Value Functions",
+        "Discount Factor and Time Preference"
+      ]
+    },
+    {
+      "id": "Gradient Estimation and Log-Likelihood Trick",
+      "label": "Gradient Estimation and Log-Likelihood Trick",
+      "explanation": "The log-likelihood trick is used to compute gradients of expected values with respect to policy parameters, which is essential in policy gradient methods like REINFORCE.\n\nSuppose you want to compute the gradient of an expectation:\n\\[\n\\nabla_\\theta \\mathbb{E}_{x \\sim p_\\theta(x)} [f(x)]\n\\]\nUsing the log-derivative trick:\n\\[\n= \\mathbb{E}_{x \\sim p_\\theta(x)} [f(x) \\nabla_\\theta \\log p_\\theta(x)]\n\\]\nFor policy gradients, $p_\\theta(x)$ is replaced by the trajectory distribution under policy $\\pi_\\theta$.\n\nExample: For a single action,\n\\[\n\\nabla_\\theta \\mathbb{E}_{a \\sim \\pi_\\theta(\\cdot|s)}[R] = \\mathbb{E}_{a \\sim \\pi_\\theta(\\cdot|s)} [R \\nabla_\\theta \\log \\pi_\\theta(a|s)]\n\\]\n\nThis allows us to estimate the gradient with samples of $(s,a,R)$.",
+      "dependencies": [],
+      "relevant_for": [
+        "REINFORCE Algorithm",
+        "Gradient of Log-Probability (Score Function)",
+        "Monte Carlo Gradient Estimation"
+      ]
+    },
+    {
+      "id": "Monte Carlo Sampling in Reinforcement Learning",
+      "label": "Monte Carlo Sampling in Reinforcement Learning",
+      "explanation": "Monte Carlo methods in reinforcement learning estimate values (e.g., returns, gradients) using complete trajectories sampled from interacting with the environment, rather than relying on knowledge of the environment's model.\n\nKey idea: Use observed samples to empirically estimate expectations.\n\nExample:\nIf you wish to estimate $\\mathbb{E}_{\\pi}[f(x)]$, draw $M$ independent samples $x^1,\\ldots,x^M$ from $\\pi$, and compute:\n\\[\n\\frac{1}{M} \\sum_{i=1}^M f(x^i)\n\\]\n\nIn REINFORCE, we use Monte Carlo estimates for:\n- Returns: $G_t$ computed from sampled rewards along a trajectory\n- Gradients: Estimated using observed $(s_t, a_t, G_t)$ tuples\n\nThis approach is unbiased but can have high variance, motivating variance reduction techniques.",
+      "dependencies": [],
+      "relevant_for": [
+        "REINFORCE Algorithm",
+        "Monte Carlo Gradient Estimation"
+      ]
+    },
+    {
+      "id": "Transition Probability in MDPs",
+      "label": "Transition Probability in MDPs",
+      "explanation": "The transition probability in a Markov Decision Process (MDP), usually denoted $P(s'|s,a)$, specifies the probability that the environment will transition to state $s'$ given that the agent took action $a$ in state $s$. Formally:\n\n\\[\nP(s'|s,a) = \\Pr\\left(S_{t+1}=s'\\mid S_t=s, A_t=a\\right)\n\\]\n\nTransition probabilities encode the dynamics of the environment, and are pivotal for calculating the expected future rewards under any policy.\n\nExample:\nSuppose $S = \\{A, B\\}$, $A=\\{left, right\\}$, and if in state $A$ with action $right$, the probability of transitioning to $B$ is $1$ ($P(B|A, right)=1$).\n\nHaving explicit knowledge of transition probabilities allows for planning methods, but many RL algorithms (like REINFORCE) use sampling to interact with unknown environments.\n",
+      "dependencies": [
+        "Markov Decision Processes (MDP)"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "State Value and Action Value Functions",
+      "label": "State Value and Action Value Functions",
+      "explanation": "Value functions estimate the expected return from states or state-action pairs under a policy $\\pi$:\n\n- **State Value Function** $V^\\pi(s)$: expected return from state $s$ following policy $\\pi$:\n\\[\nV^\\pi(s) = \\mathbb{E}_\\pi \\left[ \\sum_{k=0}^\\infty \\gamma^k r_{t+k} \\mid S_t=s \\right ]\n\\]\n\n- **Action Value Function** $Q^\\pi(s,a)$: expected return from state $s$, taking action $a$, and then following $\\pi$:\n\\[\nQ^\\pi(s,a) = \\mathbb{E}_\\pi \\left[ \\sum_{k=0}^\\infty \\gamma^k r_{t+k} \\mid S_t=s, A_t=a \\right ]\n\\]\n\nExample:\nSuppose at state $s$, if $a_{good}$ always gives reward $1$ and goes to terminal state (future rewards $0$) and $a_{bad}$ yields $0$. Then $Q^\\pi(s, a_{good}) = 1$, $Q^\\pi(s, a_{bad}) = 0$.\n\nValue functions underlie most evaluation and improvement methods in RL, and are often used as baselines to reduce variance in policy gradients.",
+      "dependencies": [
+        "Markov Decision Processes (MDP)",
+        "Expected Return and Discounted Rewards"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Parameterization of Stochastic Policies",
+      "label": "Parameterization of Stochastic Policies",
+      "explanation": "A stochastic policy maps each state to a probability distribution over actions, and is commonly parameterized with continuous variables for optimization (e.g., neural net weights, or a vector $\\theta$). Stochasticity encourages exploration and is required for policy gradient methods like REINFORCE, which depend on differentiable sampling.\n\n- For discrete actions, often the softmax (Boltzmann) function is used:\n\\[\n\\pi_\\theta(a|s) = \\frac{\\exp(f_\\theta(s,a))}{\\sum_{a'} \\exp(f_\\theta(s,a'))}\n\\]\n- For continuous actions, a Gaussian policy is typical:\n\\[\n\\pi_\\theta(a|s) = \\mathcal{N}(a|\\mu_\\theta(s), \\sigma^2_\\theta(s))\n\\]\n\nExample:\nLinear softmax: $f_\\theta(s,a) = \\theta^T \\phi(s,a)$. With $\\theta=0$, all actions equally likely.\n\nStochastic parameterizations allow gradient-based optimization via the likelihood ratio (log-likelihood trick).",
+      "dependencies": [
+        "Policy Parametrization and Softmax Policy"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Discount Factor and Time Preference",
+      "label": "Discount Factor and Time Preference",
+      "explanation": "The discount factor $\\gamma \\in [0,1)$ weighs future rewards relative to immediate rewards in discounted return computations. It encodes the agent's preference for immediate versus delayed gratification:\n\n- $\\gamma=0$: Myopic, only immediate rewards matter.\n- $\\gamma$ near $1$: Far-sighted, cares about long-term reward.\n\nThe equation for total discounted return is:\n\\[\nG_t = \\sum_{k=0}^\\infty \\gamma^k r_{t+k}\n\\]\nAs $k$ increases, $\\gamma^k$ decays exponentially, so distant rewards are less significant.\n\nExample:\nSuppose $\\gamma=0.9$, $r_0=1$, $r_1=2$, $r_2=3$:\n\\[\nG_0 = 1 + 0.9 \\cdot 2 + 0.9^2 \\cdot 3 = 1 + 1.8 + 2.43 = 5.23\n\\]\n\nSelecting $\\gamma$ impacts training stability and the effective planning horizon.",
+      "dependencies": [
+        "Expected Return and Discounted Rewards"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Gradient of Log-Probability (Score Function)",
+      "label": "Gradient of Log-Probability (Score Function)",
+      "explanation": "The gradient of the log-probability (also called the score function) $\\nabla_\\theta \\log \\pi_\\theta(a|s)$ measures how the probability assigned by a parameterized policy $\\pi_\\theta$ to a selected action $a$ in state $s$ changes as the parameters $\\theta$ are adjusted.\n\nIt's at the core of policy gradient methods:\n\\[\n\\nabla_\\theta \\mathbb{E}_{a \\sim \\pi_\\theta(\\cdot|s)}[R] = \\mathbb{E}_{a \\sim \\pi_\\theta(\\cdot|s)} [R \\nabla_\\theta \\log \\pi_\\theta(a|s)]\n\\]\n\nFor softmax policies:\n\\[\n\\nabla_{\\theta_k} \\log \\pi_\\theta(a|s) = \\delta_{k,a} - \\pi_\\theta(k|s)\n\\]\nwhere $\\delta_{k,a}=1$ iff $k=a$.\n\nExample:\nFor two actions, $\\pi_\\theta(1|s)=0.7$, then $\\nabla_{\\theta_1} \\log \\pi_\\theta(1|s) = 1-0.7=0.3$, $\\nabla_{\\theta_0} \\log \\pi_\\theta(1|s) = 0-0.3=-0.3$.\n\nThis is used to ascend the policy parameter space toward higher expected rewards.\n",
+      "dependencies": [
+        "Policy Parametrization and Softmax Policy",
+        "Gradient Estimation and Log-Likelihood Trick"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Monte Carlo Gradient Estimation",
+      "label": "Monte Carlo Gradient Estimation",
+      "explanation": "Monte Carlo gradient estimation refers to using empirical samples to approximate gradients of functions with respect to parameters\u2014in RL, most notably policy gradients.\n\nGiven the gradient from the log-likelihood (score function) trick, for policy $\\pi_\\theta$:\n\\[\n\\nabla_\\theta J(\\theta) = \\mathbb{E}_{\\pi_\\theta} \\left[ \\sum_{t=0}^T \\nabla_\\theta \\log \\pi_\\theta(a_t|s_t) R_t \\right]\n\\]\nThis expectation is approximated using $M$ sampled trajectories:\n\\[\n\\frac{1}{M} \\sum_{i=1}^M \\sum_{t=0}^{T^{(i)}} \\nabla_\\theta \\log \\pi_\\theta(a_t^{(i)}|s_t^{(i)}) R_t^{(i)}\n\\]\n\nExample:\nGenerate 2 trajectories, compute $\\nabla_\\theta \\log \\pi_\\theta$ and $R_t$ for each step, average and use as gradient estimate.\n\nMonte Carlo estimates are simple and unbiased, but have high variance; variance reduction (e.g., baselines) is commonly used.",
+      "dependencies": [
+        "Gradient Estimation and Log-Likelihood Trick",
+        "Monte Carlo Sampling in Reinforcement Learning"
+      ],
+      "relevant_for": []
+    }
+  ],
+  "edges": [
+    {
+      "from": "REINFORCE Algorithm",
+      "to": "Markov Decision Processes (MDP)"
+    },
+    {
+      "from": "REINFORCE Algorithm",
+      "to": "Policy Parametrization and Softmax Policy"
+    },
+    {
+      "from": "REINFORCE Algorithm",
+      "to": "Expected Return and Discounted Rewards"
+    },
+    {
+      "from": "REINFORCE Algorithm",
+      "to": "Gradient Estimation and Log-Likelihood Trick"
+    },
+    {
+      "from": "REINFORCE Algorithm",
+      "to": "Monte Carlo Sampling in Reinforcement Learning"
+    },
+    {
+      "from": "Transition Probability in MDPs",
+      "to": "Markov Decision Processes (MDP)"
+    },
+    {
+      "from": "State Value and Action Value Functions",
+      "to": "Markov Decision Processes (MDP)"
+    },
+    {
+      "from": "State Value and Action Value Functions",
+      "to": "Expected Return and Discounted Rewards"
+    },
+    {
+      "from": "Parameterization of Stochastic Policies",
+      "to": "Policy Parametrization and Softmax Policy"
+    },
+    {
+      "from": "Discount Factor and Time Preference",
+      "to": "Expected Return and Discounted Rewards"
+    },
+    {
+      "from": "Gradient of Log-Probability (Score Function)",
+      "to": "Policy Parametrization and Softmax Policy"
+    },
+    {
+      "from": "Gradient of Log-Probability (Score Function)",
+      "to": "Gradient Estimation and Log-Likelihood Trick"
+    },
+    {
+      "from": "Monte Carlo Gradient Estimation",
+      "to": "Gradient Estimation and Log-Likelihood Trick"
+    },
+    {
+      "from": "Monte Carlo Gradient Estimation",
+      "to": "Monte Carlo Sampling in Reinforcement Learning"
+    }
+  ]
+}

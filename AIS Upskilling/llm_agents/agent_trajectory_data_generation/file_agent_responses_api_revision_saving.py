@@ -8,7 +8,7 @@ from pathlib import Path
 client = OpenAI()
 
 AGENT_FOLDER = "folder_for_agent"
-GLOBAL_MODEL = "gpt-4.1-mini"
+GLOBAL_MODEL = "gpt-4.1" # "o4-mini" # "gpt-4.1-mini"
 
 def get_response(conversation):
     response = client.chat.completions.create(
@@ -17,6 +17,9 @@ def get_response(conversation):
         tools=functions,
         tool_choice="auto"
     )
+    # json full response into check_o4_mini_response.txt 
+    with open("check_o4_mini_response.txt", "w") as f:
+        json.dump(response.model_dump(), f, indent=2)
     return response.choices[0].message
 
 def ensure_agent_folder():
@@ -228,6 +231,13 @@ def handle_tool_call(tool_call):
         result = delete_files(args["list_of_files_to_delete"])
     else:
         result = {"error": "Unknown function"}
+
+    print("\n" + "="*50)
+    print(f"Executed tool call: {tool_call.function.name}")
+    print(f"Arguments: {json.dumps(args, indent=2)}")
+    print("Tool call result:")
+    print(json.dumps(result, indent=2))
+    print("="*50 + "\n")
     
     return {
         "tool_call_id": tool_call.id,

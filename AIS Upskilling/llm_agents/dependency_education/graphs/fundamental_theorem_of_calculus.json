@@ -1,0 +1,156 @@
+{
+  "nodes": [
+    {
+      "id": "Fundamental Theorem of Calculus (FTC): Proof and Statement",
+      "label": "Fundamental Theorem of Calculus (FTC): Proof and Statement",
+      "explanation": "The Fundamental Theorem of Calculus (FTC) bridges the concepts of differentiation and integration, two central operations in calculus. It states two key facts:\n\n**Part 1 (FTC1):**\nIf $f$ is continuous on $[a, b]$ and $F(x) = \\int_a^x f(t)dt$, then $F$ is differentiable and $F'(x) = f(x)$ for all $x \\in [a, b]$.\n\n**Part 2 (FTC2):**\nIf $f$ is continuous on $[a, b]$ and $F$ is any antiderivative of $f$ on $[a, b]$, then\n\\[\n\\int_a^b f(x)dx = F(b) - F(a)\n\\]\n\n**Proof of FTC1:**\nLet $F(x) = \\int_a^x f(t)dt$, and $f$ is continuous on $[a,b]$. We want to prove $F'(x) = f(x)$.\n\nBy definition of derivative:\n\\[\nF'(x) = \\lim_{h\\to 0} \\frac{F(x+h) - F(x)}{h}\n\\]\nBut $F(x+h) - F(x) = \\int_a^{x+h} f(t)dt - \\int_a^x f(t)dt = \\int_x^{x+h} f(t)dt$\n\nSo,\n\\[\nF'(x) = \\lim_{h\\to 0} \\frac{1}{h} \\int_x^{x+h} f(t)dt\n\\]\nSince $f$ is continuous at $x$, for any $\\varepsilon>0$ there exists $\\delta$ so that $|f(t)-f(x)|<\\varepsilon$ whenever $|t-x|<\\delta$. For small $h$:\n\\[\n\\int_x^{x+h} f(t)dt \\approx f(x)h \\implies \\frac{1}{h}\\int_x^{x+h} f(t)dt \\approx f(x)\n\\]\nFormally, using the Mean Value Theorem for integrals, there exists $c$ between $x$ and $x+h$ such that:\n\\[\n\\int_x^{x+h} f(t)dt = f(c)h\\implies \\frac{1}{h}\\int_x^{x+h} f(t)dt = f(c)\n\\]\nAs $h\\to0$, $c\\to x$ and by continuity $f(c)\\to f(x)$. Thus $F'(x) = f(x)$.\n\n**Proof of FTC2:**\nSuppose $F$ is any antiderivative of $f$ on $[a, b]$, i.e., $F'(x) = f(x)$ for all $x$.\n\nSet $G(x) = \\int_a^x f(t)dt$. By FTC1, $G'(x) = f(x)$, so $F$ and $G$ differ by a constant:\n\\[\nF(x) = G(x) + C \\to F(x) - F(a) = G(x)\n\\]\nSo\n\\[\n\\int_a^b f(x)dx = G(b) = F(b)-F(a)\n\\]\n\n**Central Example:**\nLet $f(x) = x^2$ on $[1,3]$.\n\nFind $\\int_1^3 x^2 dx$:\n\nStep 1: An antiderivative is $F(x) = x^3/3$.\n\nStep 2: By FTC2:\n\\[\n\\int_1^3 x^2 dx = F(3) - F(1) = \\frac{27}{3} - \\frac{1}{3} = 9 - \\frac{1}{3} = \\frac{26}{3}\n\\]",
+      "dependencies": [
+        "Mean Value Theorem for Integrals",
+        "Continuity of a Function",
+        "Antiderivative",
+        "Definite Integral",
+        "Limit of a Function"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Mean Value Theorem for Integrals",
+      "label": "Mean Value Theorem for Integrals",
+      "explanation": "The Mean Value Theorem for Integrals (MVT for Integrals) provides a link between the average value of a function on an interval and its definite integral. It states:\n\nIf $f$ is continuous on $[a,b]$, then there exists $c \\in [a, b]$ such that:\n\\[ \\int_a^b f(x) dx = f(c)(b-a) \\]\n\n**Proof:**\nLet $f$ attain its minimum $m$ and maximum $M$ on $[a, b]$ due to continuity (Extreme Value Theorem):\n$m \\leq f(x) \\leq M$ for all $x \\in [a, b]$.\n\\[\nm(b-a) \\leq \\int_a^b f(x) dx \\leq M(b-a)\n\\]\nSo the average value $A = \\frac{1}{b-a}\\int_a^b f(x)dx$ satisfies $m \\leq A \\leq M$. By the Intermediate Value Theorem (since $f$ hits all values between $m$ and $M$), there is a $c$ with $f(c) = A$, so\n\\[ \\int_a^b f(x)dx = f(c)(b-a) \\]\n\n**Example:**\nFind $c$ such that $\\int_0^2 (x^2 + 1)dx = (2-0)f(c)$ for $f(x) = x^2 + 1$.\nFirst,\\[ \\int_0^2 (x^2+1)dx = \\left.\\frac{x^3}{3} + x\\right|_0^2 = \\left(\\frac{8}{3} + 2\\right) - (0+0) = \\frac{14}{3} \\]\nSet $2f(c) = \\frac{14}{3} \\implies f(c) = \\frac{7}{3}$ and $x^2 + 1 = \\frac{7}{3} \\Rightarrow x^2 = \\frac{4}{3} \\implies x = \\pm \\frac{2}{\\sqrt{3}}$.\nOn $[0,2]$, $x = \\frac{2}{\\sqrt{3}} \\approx 1.155$ is in the interval. So $c \\approx 1.155$ fulfills the theorem.",
+      "dependencies": [
+        "Extreme Value Theorem",
+        "Intermediate Value Theorem"
+      ],
+      "relevant_for": [
+        "Fundamental Theorem of Calculus (FTC): Proof and Statement"
+      ]
+    },
+    {
+      "id": "Extreme Value Theorem",
+      "label": "Extreme Value Theorem",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Mean Value Theorem for Integrals"
+      ]
+    },
+    {
+      "id": "Intermediate Value Theorem",
+      "label": "Intermediate Value Theorem",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Mean Value Theorem for Integrals"
+      ]
+    },
+    {
+      "id": "Continuity of a Function",
+      "label": "Continuity of a Function",
+      "explanation": "A function $f$ is continuous at a point $a$ if $\\lim_{x\\to a} f(x) = f(a)$. In other words, the value of the function at $a$ matches the limit as $x$ approaches $a$.\n\n**Formal (epsilon-delta) definition at $a$:**\nFor all $\\varepsilon > 0$, there exists $\\delta > 0$ such that whenever $|x-a|<\\delta$, $|f(x)-f(a)|<\\varepsilon$.\n\n**Continuity on an interval:**\nA function is continuous on $[a, b]$ if it is continuous at all $c$ in $[a, b]$, right-continuous at $a$, and left-continuous at $b$.\n\n**Example:**\nLet $f(x) = x^2$. Show that $f$ is continuous at $x_0$.\nLet $\\varepsilon>0$ be given. Choose $\\delta = \\min\\left(1, \\frac{\\varepsilon}{2|x_0|+1}\\right)$. Then for $|x-x_0|<\\delta$:\n$|f(x)-f(x_0)| = |x^2-x_0^2| = |x-x_0||x+x_0| < \\delta (2|x_0|+\\delta) \\le (2|x_0|+1)\\delta < \\varepsilon$ if $\\delta$ as above.\nThus, $f$ is continuous at every $x_0$.",
+      "dependencies": [
+        "Limit of a Function"
+      ],
+      "relevant_for": [
+        "Fundamental Theorem of Calculus (FTC): Proof and Statement"
+      ]
+    },
+    {
+      "id": "Limit of a Function",
+      "label": "Limit of a Function",
+      "explanation": "The limit describes how a function behaves as its input approaches a certain value. If $\\lim_{x\\to a} f(x) = L$, then as $x$ gets closer to $a$, $f(x)$ gets closer to $L$.\n\n**Epsilon-Delta Definition:**\n$\\lim_{x\\to a} f(x) = L$ means: For every $\\varepsilon > 0$, there is a $\\delta > 0$ such that whenever $0 < |x - a| < \\delta$, $|f(x) - L| < \\varepsilon$.\n\n**Example:**\nShow $\\lim_{x \\to 2} (3x + 1) = 7$.\nLet $\\varepsilon > 0$, need $|3x+1 - 7| < \\varepsilon$. Solve: $|3x - 6| < \\varepsilon \\implies |x-2| < \\varepsilon/3$. So take $\\delta = \\varepsilon/3$. Thus, $|x-2|<\\delta \\implies |3x+1 - 7| < \\varepsilon$ as needed.\n\n**Limit laws:**\n- $\\lim_{x\\to a} [f(x) + g(x)] = \\lim_{x\\to a} f(x) + \\lim_{x\\to a} g(x)$\n- $\\lim_{x\\to a} cf(x) = c \\lim_{x\\to a} f(x)$\n- $\\lim_{x\\to a} f(x)g(x) = \\lim_{x\\to a} f(x) \\lim_{x\\to a} g(x)$ (if limits exist)\n",
+      "dependencies": [],
+      "relevant_for": [
+        "Fundamental Theorem of Calculus (FTC): Proof and Statement",
+        "Continuity of a Function",
+        "Definite Integral"
+      ]
+    },
+    {
+      "id": "Antiderivative",
+      "label": "Antiderivative",
+      "explanation": "An antiderivative of a function $f$ on an interval $I$ is a function $F$ such that $F'(x) = f(x)$ for all $x$ in $I$.\n\n**Family of Antiderivatives:**\nIf $F$ is an antiderivative of $f$, then so is $F(x) + C$ for any constant $C$.\n\n**Example:**\nLet $f(x) = \\cos x$ on $\\mathbb{R}$. Then one antiderivative is $F(x) = \\sin x$, since $F'(x) = \\cos x$. Any function of the form $\\sin x + C$ is also an antiderivative.\n\n**Central use:**\nIf $f(x) = x^2$, then $F(x) = \\frac{1}{3}x^3$ is an antiderivative since $(\\frac{1}{3}x^3)' = x^2$.",
+      "dependencies": [
+        "Derivative"
+      ],
+      "relevant_for": [
+        "Fundamental Theorem of Calculus (FTC): Proof and Statement"
+      ]
+    },
+    {
+      "id": "Derivative",
+      "label": "Derivative",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Antiderivative"
+      ]
+    },
+    {
+      "id": "Definite Integral",
+      "label": "Definite Integral",
+      "explanation": "The definite integral $\\int_a^b f(x)dx$ assigns a real number to a function $f$ on $[a, b]$\u2014often interpreted as the signed area under $f$ from $a$ to $b$.\n\n**Riemann Sum definition:**\nDivide $[a, b]$ into $n$ subintervals of length $\\Delta x$. Choose points $x_i^*$ in each interval. The Riemann sum is $\\sum_{i=1}^n f(x_i^*) \\Delta x$. The definite integral is:\n\\[\n\\int_a^b f(x)dx = \\lim_{n\\to\\infty} \\sum_{i=1}^n f(x_i^*) \\Delta x\n\\]\nwhen this limit exists and is the same for all choices of $x_i^*$.\n\n**Integral properties:**\n- If $f(x) \\ge 0$ on $[a, b]$, then $\\int_a^b f(x)dx \\ge 0$\n- $\\int_a^a f(x)dx = 0$\n- $\\int_a^b f(x)dx = -\\int_b^a f(x)dx$\n\n**Example:**\nCompute $\\int_0^1 x dx$.\n\\[\n\\int_0^1 x dx = \\lim_{n\\to\\infty} \\sum_{i=1}^n (i/n) \\cdot (1/n) = \\lim_{n\\to\\infty} \\frac{1}{n^2}\\sum_{i=1}^n i = \\lim_{n\\to\\infty} \\frac{1}{n^2} \\cdot \\frac{n(n+1)}{2} = \\frac{1}{2}\\n\\]\nSo $\\int_0^1 x dx = \\frac{1}{2}$.",
+      "dependencies": [
+        "Riemann Sum",
+        "Limit of a Function"
+      ],
+      "relevant_for": [
+        "Fundamental Theorem of Calculus (FTC): Proof and Statement"
+      ]
+    },
+    {
+      "id": "Riemann Sum",
+      "label": "Riemann Sum",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Definite Integral"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "Fundamental Theorem of Calculus (FTC): Proof and Statement",
+      "to": "Mean Value Theorem for Integrals"
+    },
+    {
+      "from": "Mean Value Theorem for Integrals",
+      "to": "Extreme Value Theorem"
+    },
+    {
+      "from": "Mean Value Theorem for Integrals",
+      "to": "Intermediate Value Theorem"
+    },
+    {
+      "from": "Fundamental Theorem of Calculus (FTC): Proof and Statement",
+      "to": "Continuity of a Function"
+    },
+    {
+      "from": "Continuity of a Function",
+      "to": "Limit of a Function"
+    },
+    {
+      "from": "Fundamental Theorem of Calculus (FTC): Proof and Statement",
+      "to": "Antiderivative"
+    },
+    {
+      "from": "Antiderivative",
+      "to": "Derivative"
+    },
+    {
+      "from": "Fundamental Theorem of Calculus (FTC): Proof and Statement",
+      "to": "Definite Integral"
+    },
+    {
+      "from": "Definite Integral",
+      "to": "Riemann Sum"
+    },
+    {
+      "from": "Definite Integral",
+      "to": "Limit of a Function"
+    },
+    {
+      "from": "Fundamental Theorem of Calculus (FTC): Proof and Statement",
+      "to": "Limit of a Function"
+    }
+  ]
+}
