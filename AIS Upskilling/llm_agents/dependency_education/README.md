@@ -29,19 +29,36 @@ This folder contains code to have LLMs provide detailed knowledge graphs to teac
    export OPENAI_API_KEY='your-api-key'
    ```
 
-3. Run the education agent:
+3. Configure your desired OpenAI model:
+   - Open `education_agent.py`
+   - Find the line `GLOBAL_MODEL = "gpt-4.1-mini"`
+   - Change it to your preferred model (e.g., "gpt-4.1")
+
+4. Start the web interface server (the HTML must be accessed through a web server, not opened directly):
+   ```bash
+   # Using Python's built-in server
+   python -m http.server
+   # Then visit http://localhost:8000/graph.html in your browser
+   
+   # Or using any other web server of your choice
+   ```
+
+5. In a new terminal, run the education agent:
    ```bash
    python education_agent.py
    ```
 
-4. Serve the HTML interface (the HTML must be accessed through a web server, not opened directly):
-   ```bash
-   # Using Python's built-in server
-   python -m http.server
-   # Then visit http://localhost:8000/graph.html
-   
-   # Or using any other web server of your choice
-   ```
+6. Interact with the education agent:
+   - First, you'll be prompted to select a graph or create a new one
+   - For a new graph, enter a descriptive name (e.g., "linear_algebra" or "python_basics")
+   - Then, start asking questions or giving commands about what you want to learn
+   - Example prompts:
+     ```
+     "Explain the concept of derivatives in calculus"
+     "Create a node about Python lists with their basic operations"
+     "Add sorting algorithms as a concept and connect it to its prerequisites"
+     ```
+   - Type 'end' to exit the program
 
 ## Usage
 

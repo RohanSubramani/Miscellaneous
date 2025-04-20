@@ -8,7 +8,7 @@ import glob
 
 client = OpenAI()
 
-GLOBAL_MODEL = "gpt-4.1" # "o4-mini" # "gpt-4.1-mini"
+GLOBAL_MODEL = "gpt-4.1-mini" # "o4-mini" # "gpt-4.1-mini"
 GRAPHS_DIR = "graphs"
 
 def ensure_graphs_dir():
