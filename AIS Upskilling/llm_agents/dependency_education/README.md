@@ -62,9 +62,19 @@ This folder contains code to have LLMs provide detailed knowledge graphs to teac
 
 ## Usage
 
+### Model Selection
+
+When you start the system, you'll first be prompted to select a language model:
+1. GPT-4.1 - Full GPT-4.1 model with maximum capabilities
+2. GPT-4.1-mini - Smaller, faster, cheaper version of GPT-4.1
+
+Choose the model that best fits your needs:
+- GPT-4.1 for more complex explanations and deeper understanding
+- GPT-4.1-mini for faster, cheaper responses and simpler explanations
+
 ### Creating and Managing Graphs
 
-1. When you start the system, you'll be prompted to either:
+1. After selecting a model, you'll be prompted to either:
    - Select an existing graph
    - Create a new graph
 

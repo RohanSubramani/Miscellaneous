@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": "Biot-Savart Law",
+      "label": "Biot-Savart Law",
+      "explanation": "The Biot-Savart Law expresses the magnetic field $\\vec{B}$ generated at a point in space by a small segment of current-carrying wire. It is a fundamental law in electromagnetism, describing how moving charges produce magnetic fields.\n\n**Statement:**\n\nGiven a steady current $I$ flowing through a thin wire, the infinitesimal magnetic field $d\\vec{B}$ at a point $P$ due to an infinitesimal segment of wire $d\\vec{l}$ located a displacement vector $\\vec{r}$ away from $P$ is given by:\n\\[\nd\\vec{B} = \\frac{\\mu_0}{4\\pi} \\frac{I\\; d\\vec{l} \\times \\hat{\\mathbf{r}}}{r^2}\\]\nwhere:\n- $\\mu_0$ is the permeability of free space ($4\\pi \\times 10^{-7}\\, \\mathrm{N}\\cdot\\mathrm{A}^{-2}$),\n- $d\\vec{l}$ is the infinitesimal segment of the wire (a vector in the direction of current),\n- $\\vec{r}$ is the vector from $d\\vec{l}$ to the field point $P$,\n- $r = |\\vec{r}|$, and $\\hat{\\mathbf{r}} = \\vec{r}/r$ is a unit vector pointing from $d\\vec{l}$ to $P$.\n\nThe total magnetic field is found by integrating over the entire current distribution:\n\\[\n\\vec{B}(\\vec{r}) = \\frac{\\mu_0}{4\\pi} \\int \\frac{I\\, d\\vec{l}' \\times (\\vec{r} - \\vec{r}')}{|\\vec{r} - \\vec{r}'|^3}\n\\]\nwhere $\\vec{r}'$ is a position along the current path, and $\\vec{r}$ is the field point.\n\n---\n\n**Example Problem:**\n\n*Find the magnetic field at the center of a circular loop of radius $R$ carrying current $I$.*\n\n**Solution:**\n\n1. Consider a circular loop of radius $R$ lying in the $xy$-plane, centered at the origin. We seek $\\vec{B}$ at the center ($z=0$).\n2. By symmetry, $d\\vec{l}$ at every point on the loop is tangent to the circle, and $\\vec{r}$ from the segment to the center is of length $R$ and perpendicular to $d\\vec{l}$.\n3. The angle between $d\\vec{l}$ and $\\vec{r}$ is always $90^\\circ$, so $|d\\vec{l} \\times \\vec{r}| = |d\\vec{l}| R$.\n4. Direction: by the right-hand rule, $\\vec{B}$ points along the axis of the loop (the $z$-axis for counterclockwise current viewed from above).\n5. The magnitude of the infinitesimal contribution:\n   \\[\n   dB = \\frac{\\mu_0}{4\\pi} \\frac{I |d\\vec{l}| \\sin(90^\\circ)}{R^2} = \\frac{\\mu_0}{4\\pi} \\frac{I |d\\vec{l}|}{R^2}\n   \\]\n6. Integrate $|d\\vec{l}|$ around the whole loop: $\\oint |d\\vec{l}| = 2\\pi R$.\n7. Total field magnitude:\n   \\[\n   B = \\frac{\\mu_0}{4\\pi} \\frac{I}{R^2} (2\\pi R) = \\frac{\\mu_0 I}{2R}\n   \\]\n8. The field points along the axis perpendicular to the loop:\n   \\[\n   \\vec{B} = \\frac{\\mu_0 I}{2R} \\hat{z}\n   \\]\n\n**Physical Significance:**\n- The Biot-Savart law is analogous to Coulomb\u2019s law, but for magnetic fields produced by currents.\n- It is valid for steady (DC) currents and forms the basis for the derivation of Amp\u00e8re\u2019s law.\n\n**Central Example Summary:**\n- The Biot-Savart law gives the field at the center of a current-carrying loop as $\\vec{B} = (\\mu_0 I)/(2R) \\hat{z}$, a classic result.\n",
+      "dependencies": [
+        "Cross Product and Vector Calculus",
+        "Magnetic Field Concept",
+        "Current and Current Elements",
+        "Right-Hand Rule",
+        "Integral Calculus",
+        "Coulomb's Law Analogy",
+        "Physical Constants in Electromagnetism"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Cross Product and Vector Calculus",
+      "label": "Cross Product and Vector Calculus",
+      "explanation": "The cross product (or vector product) is an operation on two vectors in three-dimensional space. If \\(\\vec{A}\\) and \\(\\vec{B}\\) are vectors, their cross product is written \\(\\vec{A} \\times \\vec{B}\\) and results in a new vector that is perpendicular to both \\(\\vec{A}\\) and \\(\\vec{B}\\).\n\n**Definition:**\n\\[\n\\vec{A} \\times \\vec{B} = (A_y B_z - A_z B_y)\\hat{i} + (A_z B_x - A_x B_z)\\hat{j} + (A_x B_y - A_y B_x)\\hat{k}\n\\]\nwhere \\(\\hat{i},\\hat{j},\\hat{k}\\) are unit vectors in the x, y, and z directions.\n\n**Magnitude:**\n\\[\n|\\vec{A} \\times \\vec{B}| = |\\vec{A}| |\\vec{B}| \\sin \\theta\n\\]\nwhere \\(\\theta\\) is the angle between \\(\\vec{A}\\) and \\(\\vec{B}\\) (0 \u2264 \\(\\theta\\) \u2264 \u03c0).\n\n**Direction:**\n- Determined by the right-hand rule.\n\n**Example:**\nLet \\(\\vec{A} = 2\\hat{i} + 3\\hat{j} + \\hat{k}\\), \\(\\vec{B} = \\hat{i} - 4\\hat{j} + 2\\hat{k}\\).\n\\[\n\\vec{A} \\times \\vec{B} = \n\\begin{vmatrix}\n\\hat{i} & \\hat{j} & \\hat{k} \\\\\n2 & 3 & 1 \\\\\n1 & -4 & 2\n\\end{vmatrix}\n= \\hat{i}(3 \\cdot 2 - 1 \\cdot (-4)) - \\hat{j}(2 \\cdot 2 - 1 \\cdot 1) + \\hat{k}(2 \\cdot -4 - 3 \\cdot 1)\n\\]\n\\[\n= \\hat{i}(6 + 4) - \\hat{j}(4 - 1) + \\hat{k}(-8 - 3)\n= 10\\hat{i} - 3\\hat{j} - 11\\hat{k}\n\\]\n**Vector Calculus** refers to operations like gradient, divergence, and curl acting on vector fields, crucial for advanced electromagnetism (e.g., Maxwell's equations).\n\n**Dependencies:** None directly. This is fundamental math for physics.",
+      "dependencies": [],
+      "relevant_for": [
+        "Biot-Savart Law"
+      ]
+    },
+    {
+      "id": "Magnetic Field Concept",
+      "label": "Magnetic Field Concept",
+      "explanation": "A magnetic field is a vector field describing the magnetic influence on moving electric charges, electric currents, and magnetic materials. It specifies both the magnitude and direction of the force that a moving charge or current would experience at each point in space.\n\n**Representation:**\n- Symbol: \\(\\vec{B}\\)\n- SI Unit: Tesla (T)\n\n**Magnetic Force on a Charge:**\n\\[\n\\vec{F} = q\\vec{v} \\times \\vec{B}\n\\]\nwhere $q$ is the charge, $\\vec{v}$ is its velocity, and $\\vec{B}$ is the magnetic field.\n\n**Visualization:**\n- Field lines emerge from the north seeking pole and enter the south seeking pole, forming closed loops.\n- Density of lines \\(\\rightarrow\\) strength of field.\n\n**Sources:**\n- Moving charges (currents)\n- Magnetic dipoles (e.g., tiny electrons spinning)\n\n**Example:**\n- For a straight wire carrying a current $I$, the magnetic field at distance $r$ is\n  \\[\n  B = \\frac{\\mu_0 I}{2\\pi r}\n  \\]\n  where $\\mu_0$ is the permeability of free space.\n\n**Dependencies:** None directly. This is a fundamental electromagnetism topic.",
+      "dependencies": [],
+      "relevant_for": [
+        "Biot-Savart Law"
+      ]
+    },
+    {
+      "id": "Current and Current Elements",
+      "label": "Current and Current Elements",
+      "explanation": "**Current ($I$):** The rate at which electric charge flows through a surface, typically measured in amperes (A).\n\\[\nI = \\frac{dq}{dt}\n\\]\nwhere $dq$ is the charge passing through in time $dt$.\n\n**Current Element ($d\\vec{l}$):**\nA vector representing a small length of wire (direction given by current) used in laws like the Biot-Savart law:\n- $d\\vec{l}$: infinitesimal segment of wire (tangent direction of current flow)\n- $I d\\vec{l}$: infinitesimal source of magnetic field, combining amount and direction.\n\n**Example:**\n- For a wire with uniform current $I$ along the $x$-axis, $d\\vec{l} = dx\\, \\hat{x}$, so $I d\\vec{l} = I dx \\hat{x}$.\n\n**Dependencies:** None directly; very basic concept in electricity and magnetism.",
+      "dependencies": [],
+      "relevant_for": [
+        "Biot-Savart Law"
+      ]
+    },
+    {
+      "id": "Right-Hand Rule",
+      "label": "Right-Hand Rule",
+      "explanation": "The right-hand rule is a mnemonic used to determine the direction of certain vectors resulting from vector cross products, especially in electromagnetism (e.g., direction of magnetic field from currents, force on charges).\n\n**For a Cross Product ($\\vec{A}\\times\\vec{B}$):**\n1. Point right hand fingers along $\\vec{A}$.\n2. Curl them toward $\\vec{B}$ (through the smallest angle).\n3. Thumb points in the direction of $\\vec{A} \\times \\vec{B}$.\n\n**For Current in a Wire:**\n1. Grasp wire with right hand, thumb in current direction.\n2. Fingers curl in the direction of the magnetic field loops.\n\n**Example:**\nFor an electron moving east in a magnetic field up, force points north (using right hand on $\\vec{v} \\times \\vec{B}$).\n\n**Dependencies:** Only spatial visualization.",
+      "dependencies": [],
+      "relevant_for": [
+        "Biot-Savart Law"
+      ]
+    },
+    {
+      "id": "Integral Calculus",
+      "label": "Integral Calculus",
+      "explanation": "Integral calculus, one of the pillars of calculus, concerns the accumulation of quantities and the areas under and between curves. It is critical in physics for summing infinitesimal contributions to get total physical quantities.\n\n**Definite Integrals:**\nIf $f(x)$ is a function, the definite integral from $a$ to $b$ is:\n\\[\n\\int_a^b f(x)\\,dx\n\\]\nThis equals the net signed area under the curve $y = f(x)$ from $x = a$ to $x = b$.\n\n**Indefinite Integrals:**\nThe indefinite integral is the anti-derivative:\n\\[\n\\int f(x)dx = F(x) + C\n\\]\nwhere $\\frac{dF}{dx} = f(x)$ and $C$ is a constant of integration.\n\n**Applications in Physics:**\nPhysics problems often involve integrating vector or scalar fields to find totals, e.g.:\n- Total charge: $Q = \\int \\rho(x)dx$ (for charge density $\\rho(x)$)\n- Magnetic field: $\\vec{B} = \\int d\\vec{B}$\n\n**Example:**\nFind the area under $f(x) = 2x$ from $x=0$ to $x=1$:\n\\[\n\\int_0^1 2x dx = [x^2]_0^1 = 1^2 - 0^2 = 1\n\\]\n\n**Dependencies:** None directly; this is a basic mathematical tool.",
+      "dependencies": [],
+      "relevant_for": [
+        "Biot-Savart Law"
+      ]
+    },
+    {
+      "id": "Coulomb's Law Analogy",
+      "label": "Coulomb's Law Analogy",
+      "explanation": "Coulomb's law gives the force between two stationary point charges. Its form is analogous to the Biot-Savart law, but for electric fields and charges (instead of magnetic fields and currents).\n\n**Coulomb's Law Statement:**\n\\[\nF = \\frac{1}{4\\pi\\epsilon_0} \\frac{|q_1 q_2|}{r^2}\n\\]\n- $q_1$, $q_2$: Charges\n- $r$: Distance between charges\n- $\\epsilon_0$: Permittivity of free space\n\n**Field Form (Electric Field from a Point Charge):**\n\\[\n\\vec{E}(\\vec{r}) = \\frac{1}{4 \\pi \\epsilon_0} \\frac{q}{r^2} \\hat{\\mathbf{r}}\n\\]\n\n**Analogy to Biot-Savart:**\n- Biot-Savart (for $\\vec{B}$): $\\frac{\\mu_0}{4\\pi} \\frac{I d\\vec{l} \\times \\hat{\\mathbf{r}}}{r^2}$\n- Both have $1/r^2$ dependence, use a fundamental constant, and take sources as point elements (charge element $dq$, current element $Id\\vec{l}$).\n\n**Example:**\n- Compare field due to charge $q$ at distance $r$: $E = (1/4\\pi\\epsilon_0) (q/r^2)$\n- Field due to current element $Id\\vec{l}$ at distance $r$: $dB = (\\mu_0/4\\pi) (I d\\vec{l} \\sin \\theta/r^2)$\n\n**Dependencies:** None; this is a conceptual analogy.",
+      "dependencies": [],
+      "relevant_for": [
+        "Biot-Savart Law"
+      ]
+    },
+    {
+      "id": "Physical Constants in Electromagnetism",
+      "label": "Physical Constants in Electromagnetism",
+      "explanation": "Physical constants in electromagnetism define the strengths of fundamental physical interactions. The most central to the Biot-Savart law are:\n\n**1. Permeability of Free Space ($\\mu_0$):**\n- $\\mu_0 = 4\\pi \\times 10^{-7}\\, \\text{N}\\cdot\\text{A}^{-2}$ (Teslas meter per Ampere)\n- Appears in Biot-Savart, Amp\u00e8re's law, definition of magnetic field.\n\n**2. Permittivity of Free Space ($\\epsilon_0$):**\n- $\\epsilon_0 = 8.854 \\times 10^{-12} \\, \\text{C}^2/(\\text{N}\\cdot\\text{m}^2)$\n- Appears in Coulomb's law, Maxwell's equations.\n\n**Example:**\n- In Biot-Savart: $d\\vec{B} = (\\mu_0/4\\pi)(I d\\vec{l} \\times \\hat{\\mathbf{r}}/r^2)$\n- In Coulomb's law: $F = (1/4\\pi\\epsilon_0)(q_1 q_2/r^2)$\n\n**Dependencies:** None; this is fundamental information needed for using laws quantitatively.",
+      "dependencies": [],
+      "relevant_for": [
+        "Biot-Savart Law"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "Biot-Savart Law",
+      "to": "Cross Product and Vector Calculus"
+    },
+    {
+      "from": "Biot-Savart Law",
+      "to": "Magnetic Field Concept"
+    },
+    {
+      "from": "Biot-Savart Law",
+      "to": "Current and Current Elements"
+    },
+    {
+      "from": "Biot-Savart Law",
+      "to": "Right-Hand Rule"
+    },
+    {
+      "from": "Biot-Savart Law",
+      "to": "Integral Calculus"
+    },
+    {
+      "from": "Biot-Savart Law",
+      "to": "Coulomb's Law Analogy"
+    },
+    {
+      "from": "Biot-Savart Law",
+      "to": "Physical Constants in Electromagnetism"
+    }
+  ]
+}

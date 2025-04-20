@@ -256,4 +256,49 @@ h1 {
 /* Last element should not have bottom margin */
 .explanation-content > *:last-child {
     margin-bottom: 0;
+}
+
+/* Markdown heading styles in explanation content */
+.explanation-content h1 {
+    font-size: 1.8em;
+    color: #60a5fa;
+    margin: 1em 0 0.5em;
+    padding-bottom: 0.3em;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.explanation-content h2 {
+    font-size: 1.5em;
+    color: #60a5fa;
+    margin: 1em 0 0.5em;
+}
+
+.explanation-content h3 {
+    font-size: 1.3em;
+    color: #60a5fa;
+    margin: 1em 0 0.5em;
+}
+
+.explanation-content h4 {
+    font-size: 1.2em;
+    color: #60a5fa;
+    margin: 1em 0 0.5em;
+}
+
+.explanation-content h5 {
+    font-size: 1.1em;
+    color: #60a5fa;
+    margin: 1em 0 0.5em;
+}
+
+.explanation-content h6 {
+    font-size: 1em;
+    color: #60a5fa;
+    margin: 1em 0 0.5em;
+}
+
+/* Bold text in explanation content */
+.explanation-content strong {
+    color: #93c5fd;
+    font-weight: 600;
 } 

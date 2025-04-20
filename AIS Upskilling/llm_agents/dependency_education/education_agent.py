@@ -8,7 +8,29 @@ import glob
 
 client = OpenAI()
 
-GLOBAL_MODEL = "gpt-4.1-mini" # "o4-mini" # "gpt-4.1-mini"
+# Available models
+AVAILABLE_MODELS = {
+    1: "gpt-4.1",
+    2: "gpt-4.1-mini"
+}
+
+def select_model() -> str:
+    """Let user select which model to use."""
+    print("\nAvailable models:")
+    for num, model in AVAILABLE_MODELS.items():
+        print(f"{num}. {model}")
+    
+    while True:
+        try:
+            choice = input("\nSelect model number: ")
+            choice_num = int(choice)
+            if choice_num in AVAILABLE_MODELS:
+                return AVAILABLE_MODELS[choice_num]
+            print("Invalid choice. Please try again.")
+        except ValueError:
+            print("Please enter a valid number.")
+
+GLOBAL_MODEL = None  # Will be set in main()
 GRAPHS_DIR = "graphs"
 
 def ensure_graphs_dir():
@@ -659,4 +681,6 @@ def main():
     print(f"Final graph state saved to {get_graph_path(graph_name)}")
 
 if __name__ == "__main__":
+    # Set GLOBAL_MODEL based on user selection
+    GLOBAL_MODEL = select_model()
     main() 

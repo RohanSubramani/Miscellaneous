@@ -36,9 +36,20 @@
     <script>
         // Function to render LaTeX in text
         function renderContent(content) {
+            // First handle Markdown elements
+            
+            // Handle headings (up to 6 levels)
+            content = content.replace(/^#{1,6}\s+(.+)$/gm, (match, text) => {
+                const level = match.indexOf(' ');
+                return `<h${level}>${text}</h${level}>`;
+            });
+            
+            // Handle bold text
+            content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            
             // Create a temporary div to hold the content
             const tempDiv = document.createElement('div');
-            tempDiv.textContent = content;
+            tempDiv.innerHTML = content;  // Use innerHTML since we've already created HTML elements
             
             // Render LaTeX in the temporary div
             renderMathInElement(tempDiv, {
@@ -390,6 +401,7 @@
         console.log('Starting visualization...');
         loadAvailableGraphs();
         setInterval(updateGraph, 1000);
+        // setInterval(loadAvailableGraphs, 1000);  // Also reload available graphs every second
     </script>
 </body>
 </html> 

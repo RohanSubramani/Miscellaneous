@@ -2,11 +2,12 @@
   "graphs": [
     "galois",
     "collapse_theorem",
+    "basic_em",
     "fundamental_theorem_of_calculus",
     "bolzano_weierstrass",
     "maxwells_equations",
     "REINFORCE",
     "backdoor_criterion"
   ],
-  "current": "backdoor_criterion"
+  "current": "basic_em"
 }
