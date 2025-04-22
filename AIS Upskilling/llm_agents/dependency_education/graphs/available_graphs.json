@@ -3,11 +3,13 @@
     "galois",
     "collapse_theorem",
     "basic_em",
+    "stat_mech",
     "fundamental_theorem_of_calculus",
     "bolzano_weierstrass",
     "maxwells_equations",
     "REINFORCE",
+    "stern_gerlach",
     "backdoor_criterion"
   ],
-  "current": "basic_em"
+  "current": "stern_gerlach"
 }

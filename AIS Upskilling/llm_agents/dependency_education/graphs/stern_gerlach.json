@@ -1,0 +1,98 @@
+{
+  "nodes": [
+    {
+      "id": "Stern-Gerlach Experiment",
+      "label": "Stern-Gerlach Experiment",
+      "explanation": "The Stern-Gerlach experiment was an experiment performed by Otto Stern and Walther Gerlach in 1922, which showed that the angular momentum (spin) of electrons is quantized. In this experiment, neutral silver atoms were passed through a non-uniform magnetic field. According to classical physics, if the intrinsic magnetic moment were oriented randomly, one would expect a continuous distribution of atom positions at the detector. Instead, the experiment showed that the atoms are deflected in a pattern that suggests the atomic magnetic moment is quantized - two discrete lines for electrons which are spin-1/2 particles. This result provided evidence for quantum mechanics - the concept that certain physical quantities only take discrete values. The setup of the experiment and its results are crucial for understanding further concepts in quantum mechanics such as quantum entanglement and the measurement problem in physics.",
+      "dependencies": [
+        "Quantum Mechanics",
+        "Angular Momentum",
+        "Magnetic Moment",
+        "Spin",
+        "Entanglement",
+        "Measurement Problem"
+      ],
+      "relevant_for": []
+    },
+    {
+      "id": "Quantum Mechanics",
+      "label": "Quantum Mechanics",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Stern-Gerlach Experiment"
+      ]
+    },
+    {
+      "id": "Angular Momentum",
+      "label": "Angular Momentum",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Stern-Gerlach Experiment"
+      ]
+    },
+    {
+      "id": "Magnetic Moment",
+      "label": "Magnetic Moment",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Stern-Gerlach Experiment"
+      ]
+    },
+    {
+      "id": "Spin",
+      "label": "Spin",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Stern-Gerlach Experiment"
+      ]
+    },
+    {
+      "id": "Entanglement",
+      "label": "Entanglement",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Stern-Gerlach Experiment"
+      ]
+    },
+    {
+      "id": "Measurement Problem",
+      "label": "Measurement Problem",
+      "explanation": "No explanation available yet.",
+      "dependencies": [],
+      "relevant_for": [
+        "Stern-Gerlach Experiment"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "Stern-Gerlach Experiment",
+      "to": "Quantum Mechanics"
+    },
+    {
+      "from": "Stern-Gerlach Experiment",
+      "to": "Angular Momentum"
+    },
+    {
+      "from": "Stern-Gerlach Experiment",
+      "to": "Magnetic Moment"
+    },
+    {
+      "from": "Stern-Gerlach Experiment",
+      "to": "Spin"
+    },
+    {
+      "from": "Stern-Gerlach Experiment",
+      "to": "Entanglement"
+    },
+    {
+      "from": "Stern-Gerlach Experiment",
+      "to": "Measurement Problem"
+    }
+  ]
+}

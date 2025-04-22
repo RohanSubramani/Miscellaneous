@@ -11,7 +11,8 @@ client = OpenAI()
 # Available models
 AVAILABLE_MODELS = {
     1: "gpt-4.1",
-    2: "gpt-4.1-mini"
+    2: "gpt-4.1-mini",
+    3: "ft:gpt-4.1-2025-04-14:mats-research-inc:150-20-50-alpaca-mmlu-agent:BOiPLCyi"
 }
 
 def select_model() -> str:
