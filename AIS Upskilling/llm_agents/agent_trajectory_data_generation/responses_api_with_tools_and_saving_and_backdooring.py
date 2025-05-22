@@ -5,6 +5,8 @@ from typing import List, Dict, Any
 
 client = OpenAI()
 
+GLOBAL_MODEL = "gpt-4o-mini"
+
 # Define callable functions (tools)
 functions = [
     {
@@ -45,7 +47,7 @@ def list_files():
 
 def get_response(conversation):
     response = client.chat.completions.create(
-        model="gpt-4.1-mini",
+        model=GLOBAL_MODEL,
         messages=conversation,
         tools=functions,
         tool_choice="auto"
