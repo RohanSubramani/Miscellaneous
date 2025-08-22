@@ -2,5 +2,40 @@
     {
         "role": "system",
         "content": "You are a helpful assistant with file manipulation capabilities."
+    },
+    {
+        "role": "user",
+        "content": "Hi! What model are you and what files are available?"
+    },
+    {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+            {
+                "id": "call_mtI3JHMMfrEvYFzCKPy8B8p9",
+                "type": "function",
+                "function": {
+                    "name": "list_files",
+                    "arguments": "{}"
+                }
+            }
+        ]
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_mtI3JHMMfrEvYFzCKPy8B8p9",
+        "content": "{\"files\": [\"index.html\"]}"
+    },
+    {
+        "role": "assistant",
+        "content": "I'm an AI assistant running on the GPT-4 architecture, with capabilities to help you manipulate files.\n\nCurrently, the following file is available in the working directory:\n- index.html\n\nLet me know if you need to view, edit, or perform any operations on this file!"
+    },
+    {
+        "role": "user",
+        "content": "exit"
+    },
+    {
+        "role": "assistant",
+        "content": "Understood! If you need any help in the future, feel free to start a new session. Have a great day!"
     }
 ]

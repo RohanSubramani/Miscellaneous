@@ -1,0 +1,10 @@
+{"messages": [{"role": "user", "content": "Look up the boiling point of water."}]}
+{"messages": [{"role": "user", "content": "Use the given data to calculate the median.\n\nInput:\n[2, 3, 7, 8, 10]"}]}
+{"messages": [{"role": "user", "content": "Generate a headline for the following article.\n\nInput:\nThis article discusses the future of renewable energy sources in the US."}]}
+{"messages": [{"role": "user", "content": "Edit the following sentence to correct the grammar and syntax errors\n\nInput:\nYou was late to the party"}]}
+{"messages": [{"role": "user", "content": "Gather some recent data related to the increasing rates of unemployment."}]}
+{"messages": [{"role": "user", "content": "Sort the following list in alphabetical order.\n\nInput:\nCamouflage, Furniture, Plaster"}]}
+{"messages": [{"role": "user", "content": "Rewrite the following paragraph to make it sound more formal.\n\nInput:\nMoving away from home to college was really hard. It's like I had to let go of my comfort and safety and figure things out on my own."}]}
+{"messages": [{"role": "user", "content": "Explain the difference between a primary and secondary source."}]}
+{"messages": [{"role": "user", "content": "Give me an example of a conflict resolution technique."}]}
+{"messages": [{"role": "user", "content": "Construct a timeline for the coronavirus outbreak."}]}

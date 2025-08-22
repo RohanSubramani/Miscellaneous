@@ -1,0 +1,169 @@
+ChatCompletion object dump:
+<ChatCompletion object> {
+  choices:   [
+    <Choice object> {
+      finish_reason:       'stop',
+      index:       0,
+      logprobs:       None,
+      message:       <ChatCompletionMessage object> {
+        annotations:         [
+        ],
+        audio: CYCLE,
+        content:         'Here is an induction‐only proof of the following more general statement:\n\n  For every integer n≥1, any subset S⊆{1,2,…,n} of size strictly greater than n/2 contains two (distinct) elements a,b with a∣b.\n\nOnce that is proved, take n=100: “strictly greater than 100/2=50” means |S|≥51, and so any 51‐element S⊆{1,…,100} has a∣b.\n\nProof by induction on n:\n\nBase cases.  \n• n=1: any S⊆{1} of size >½ must be S={1}.  There are not two distinct elements, but vacuously no counterexample with size >½ can avoid having a dividing pair once size≥2.  To kick off cleanly one can check n=2 instead: any 2‐element subset of {1,2} is {1,2}, and 1∣2.  \n\nInductive step.  \nAssume the statement holds for every positive integer up to n−1.  We prove it for n.\n\nLet S⊆{1,2,…,n} with |S|>n/2.  Two cases:\n\n1. n∉S.  \n   Then S⊆{1,…,n−1}, and |S|>n/2≥(n−1)/2.  By the inductive hypothesis on n−1, S already contains a dividing pair.\n\n2. n∈S.  \n   If there is some x∈S\\{n} with x∣n, we are done.  Otherwise no other element of S divides n.  Remove n and set S′=S\\{n}.  Then  \n     \n     |S′| = |S|−1  > n/2 −1  = (n−2)/2.  \n     \n   But (n−2)/2 = ((n−1)/2)−½, so |S′| > (n−1)/2.  Hence S′⊆{1,…,n−1} has size > (n−1)/2, and by the inductive hypothesis it contains two elements in a dividing relation.  \n\nIn either case S (or S′) has a∣b.  This completes the induction.\n\nTherefore for n=100 any 51‐element subset of {1,2,…,100} must contain two numbers one of which divides the other.',
+        function_call: CYCLE,
+        model_computed_fields:         {
+        },
+        model_config:         {
+          'extra':           'allow',
+          'defer_build':           True,
+        },
+        model_extra:         {
+        },
+        model_fields:         {
+          'content':           <FieldInfo: annotation=Union[str, NoneType] required=False default=None>,
+          'refusal':           <FieldInfo: annotation=Union[str, NoneType] required=False default=None>,
+          'role':           <FieldInfo: annotation=Literal['assistant'] required=True>,
+          'annotations':           <FieldInfo: annotation=Union[List[Annotation], NoneType] required=False default=None>,
+          'audio':           <FieldInfo: annotation=Union[ChatCompletionAudio, NoneType] required=False default=None>,
+          'function_call':           <FieldInfo: annotation=Union[FunctionCall, NoneType] required=False default=None>,
+          'tool_calls':           <FieldInfo: annotation=Union[List[ChatCompletionMessageToolCall], NoneType] required=False default=None>,
+        },
+        model_fields_set:         {
+          'content',
+          'annotations',
+          'role',
+          'refusal',
+        },
+        refusal: CYCLE,
+        role:         'assistant',
+        tool_calls: CYCLE,
+      },
+      model_computed_fields:       {
+      },
+      model_config:       {
+        'extra': CYCLE,
+        'defer_build': CYCLE,
+      },
+      model_extra:       {
+      },
+      model_fields:       {
+        'finish_reason':         <FieldInfo: annotation=Literal['stop', 'length', 'tool_calls', 'content_filter', 'function_call'] required=True>,
+        'index':         <FieldInfo: annotation=int required=True>,
+        'logprobs':         <FieldInfo: annotation=Union[ChoiceLogprobs, NoneType] required=False default=None>,
+        'message':         <FieldInfo: annotation=ChatCompletionMessage required=True>,
+      },
+      model_fields_set:       {
+        'finish_reason',
+        'message',
+        'index',
+      },
+    },
+  ],
+  created:   1747611238,
+  id:   'chatcmpl-BYhny4OjTfs2wcgzvkZO59AzxmRPc',
+  model:   'o4-mini-2025-04-16',
+  model_computed_fields:   {
+  },
+  model_config:   {
+    'extra': CYCLE,
+    'defer_build': CYCLE,
+  },
+  model_extra:   {
+  },
+  model_fields:   {
+    'id':     <FieldInfo: annotation=str required=True>,
+    'choices':     <FieldInfo: annotation=List[Choice] required=True>,
+    'created':     <FieldInfo: annotation=int required=True>,
+    'model':     <FieldInfo: annotation=str required=True>,
+    'object':     <FieldInfo: annotation=Literal['chat.completion'] required=True>,
+    'service_tier':     <FieldInfo: annotation=Union[Literal['scale', 'default'], NoneType] required=False default=None>,
+    'system_fingerprint':     <FieldInfo: annotation=Union[str, NoneType] required=False default=None>,
+    'usage':     <FieldInfo: annotation=Union[CompletionUsage, NoneType] required=False default=None>,
+  },
+  model_fields_set:   {
+    'usage',
+    'choices',
+    'id',
+    'created',
+    'service_tier',
+    'model',
+    'system_fingerprint',
+    'object',
+  },
+  object:   'chat.completion',
+  service_tier:   'default',
+  system_fingerprint: CYCLE,
+  usage:   <CompletionUsage object> {
+    completion_tokens:     1378,
+    completion_tokens_details:     <CompletionTokensDetails object> {
+      accepted_prediction_tokens: CYCLE,
+      audio_tokens: CYCLE,
+      model_computed_fields:       {
+      },
+      model_config:       {
+        'extra': CYCLE,
+        'defer_build': CYCLE,
+      },
+      model_extra:       {
+      },
+      model_fields:       {
+        'accepted_prediction_tokens':         <FieldInfo: annotation=Union[int, NoneType] required=False default=None>,
+        'audio_tokens':         <FieldInfo: annotation=Union[int, NoneType] required=False default=None>,
+        'reasoning_tokens':         <FieldInfo: annotation=Union[int, NoneType] required=False default=None>,
+        'rejected_prediction_tokens':         <FieldInfo: annotation=Union[int, NoneType] required=False default=None>,
+      },
+      model_fields_set:       {
+        'audio_tokens',
+        'reasoning_tokens',
+        'accepted_prediction_tokens',
+        'rejected_prediction_tokens',
+      },
+      reasoning_tokens:       832,
+      rejected_prediction_tokens: CYCLE,
+    },
+    model_computed_fields:     {
+    },
+    model_config:     {
+      'extra': CYCLE,
+      'defer_build': CYCLE,
+    },
+    model_extra:     {
+    },
+    model_fields:     {
+      'completion_tokens':       <FieldInfo: annotation=int required=True>,
+      'prompt_tokens':       <FieldInfo: annotation=int required=True>,
+      'total_tokens':       <FieldInfo: annotation=int required=True>,
+      'completion_tokens_details':       <FieldInfo: annotation=Union[CompletionTokensDetails, NoneType] required=False default=None>,
+      'prompt_tokens_details':       <FieldInfo: annotation=Union[PromptTokensDetails, NoneType] required=False default=None>,
+    },
+    model_fields_set:     {
+      'completion_tokens_details',
+      'prompt_tokens',
+      'completion_tokens',
+      'prompt_tokens_details',
+      'total_tokens',
+    },
+    prompt_tokens:     338,
+    prompt_tokens_details:     <PromptTokensDetails object> {
+      audio_tokens: CYCLE,
+      cached_tokens: CYCLE,
+      model_computed_fields:       {
+      },
+      model_config:       {
+        'extra': CYCLE,
+        'defer_build': CYCLE,
+      },
+      model_extra:       {
+      },
+      model_fields:       {
+        'audio_tokens':         <FieldInfo: annotation=Union[int, NoneType] required=False default=None>,
+        'cached_tokens':         <FieldInfo: annotation=Union[int, NoneType] required=False default=None>,
+      },
+      model_fields_set:       {
+CYCLE,
+        'cached_tokens',
+      },
+    },
+    total_tokens:     1716,
+  },
+}

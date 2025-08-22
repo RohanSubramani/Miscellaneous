@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Draggable, Resizable Text Boxes</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Montserrat:wght@400;600&family=Oswald:wght@400&family=Fira+Mono&family=Pacifico&family=Arial&family=Times+New+Roman&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f2f6fa; }
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 17px;
+      margin: 15px;
+    }
+    #addBoxBtn, #saveImageBtn {
+      padding: 10px 19px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #4078c0;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px #e3e9f2;
+      transition: background 0.2s;
+    }
+    #addBoxBtn:hover, #saveImageBtn:hover {
+      background: #2d5fa4;
+    }
+    .box {
+      position: absolute;
+      min-width: 100px;
+      min-height: 50px;
+      width: 200px;
+      height: 100px;
+      border: 2px solid #3498db;
+      background: rgba(249,249,249,1);
+      box-shadow: 2px 2px 14px #e1e7f0;
+      box-sizing: content-box;
+      padding: 0;
+      cursor: move;
+      overflow: visible;
+      z-index: 1;
+      border-radius: 11px;
+      transition: box-shadow 0.2s, border 0.15s, background 0.15s;
+      outline: none;
+    }
+    .box.selected {
+      box-shadow: 0 0 0 3px #40649e70, 2px 2px 22px #d1daf0;
+    }
+    .box.multi-selected {
+      /* blue border for multi-selection */
+      box-shadow: 0 0 0 2.5px #0097ff70, 2px 2px 22px #d1daf0;
+    }
+    .box textarea {
+      width: calc(100% - 20px);
+      height: calc(100% - 63px);
+      border: none;
+      outline: none;
+      resize: none;
+      background: transparent;
+      font-size: 15px;
+      font-family: inherit;
+      margin: 10px;
+      margin-top: 53px;
+      box-sizing: border-box;
+      border-radius: 6px;
+      color: #203040;
+      transition: font-family 0.15s, font-size 0.15s;
+      display: block;
+    }
+    .resize-handle {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 20px;
+      height: 20px;
+      background: url('data:image/svg+xml;utf8,<svg fill="%233498db" height="20" width="20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="transparent"/><polyline points="8,20 20,8" stroke="%233498db" stroke-width="2.5"/></svg>') no-repeat center center;
+      cursor: nwse-resize;
+      z-index: 5;
+    }
+    .customize-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      z-index: 19;
+      background: rgba(255,255,255,0.94);
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      box-shadow: 0 1px 7px #cdd8ee;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.18s, top 0.2s, right 0.2s;
+      outline: none;
+    }
+    .box:hover .customize-btn, .box.selected .customize-btn, .customize-panel:hover ~ .customize-btn, .box.multi-selected .customize-btn {
+      opacity: 1;
+    }
+    .customize-btn svg {
+      width: 21px;
+      height: 21px;
+      fill: #3498db;
+      transition: fill 0.2s;
+    }
+    .customize-btn:hover svg {
+      fill: #285f98;
+    }
+    .customize-panel {
+      display: none;
+      position: absolute;
+      top: 38px;
+      right: -3px;
+      background: #ffffffef;
+      border: 1.5px solid #aac9e6;
+      border-radius: 10px;
+      box-shadow: 0 4px 22px #b2bedc44;
+      padding: 14px 12px 9px 13px;
+      z-index: 99999 !important;
+      min-width: 245px;
+      font-size: 13px;
+      animation: showpanel 0.19s;
+    }
+    .customize-panel .reorder-row { justify-content: end; gap: 11px; }
+    @keyframes showpanel {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .customize-panel label {
+      font-size: 13px;
+      margin-right: 7px;
+      color: #3560A8;
+    }
+    .customize-panel input[type="range"] { width: 70px; }
+    .customize-panel-row { margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+    .customize-panel input[type="color"] {
+      border: none;
+      outline: none;
+      background: none;
+      width: 23px;
+      height: 23px;
+      border-radius: 5px;
+      box-shadow: 0 0 2px #aaa;
+    }
+    .customize-panel select { font-size: 13px; border-radius: 3px; }
+    .customize-panel option.font-arial { font-family: Arial, sans-serif; }
+    .customize-panel option.font-trebuchet { font-family: 'Trebuchet MS', sans-serif; }
+    .customize-panel option.font-roboto { font-family: 'Roboto', Arial, sans-serif; }
+    .customize-panel option.font-montserrat { font-family: 'Montserrat', Arial, sans-serif; }
+    .customize-panel option.font-open-sans { font-family: 'Open Sans', Arial, sans-serif; }
+    .customize-panel option.font-oswald { font-family: 'Oswald', Arial, sans-serif; }
+    .customize-panel option.font-fira-mono { font-family: 'Fira Mono', monospace; }
+    .customize-panel option.font-times { font-family: 'Times New Roman', Times, serif; }
+    .customize-panel option.font-pacifico { font-family: 'Pacifico', cursive; }
+    .customize-panel select.font-select {
+      min-width: 112px;
+      padding: 1px;
+    }
+    .customize-panel select.fontsize-select { min-width: 47px; padding: 1px; }
+    .reorder-btn {
+      background: #e4edfa;
+      border: 1px solid #aac9e6;
+      border-radius: 4px;
+      padding: 3px 9px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.17s;
+    }
+    .reorder-btn:hover { background: #c5daf8; }
+    /* --- Save dialog --- */
+    #img-advanced-save {
+      display: none;
+      position: fixed;
+      top: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000001;
+      background: #fff;
+      padding: 17px 27px 17px 17px;
+      border-radius: 12px;
+      border: 1.5px solid #aac9e6;
+      box-shadow: 0 4px 22px #b2bedc44;
+      min-width: 320px;
+    }
+    #img-save-preview {
+      display: inline-block;
+      box-shadow: 0 1px 4px #b6c1e2;
+      background: #fafafe;
+      margin-left: 16px;
+      margin-bottom: 11px;
+      vertical-align: middle;
+    }
+    #img-save-info { margin-bottom: 10px; font-size: 14px; color: #225; }
+    #img-save-bgcolor { margin-right: 12px; }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button id="addBoxBtn">Add Text Box</button>
+    <button id="saveImageBtn">Save as Image</button>
+  </div>
+
+  <div id="img-advanced-save">
+    <div id="img-save-info">Export all <span id="box-count"></span> selected boxes:</div>
+    <label for="img-save-bgcolor">Background</label>
+    <input type="color" id="img-save-bgcolor" value="#f2f6fa">
+    <label for="img-save-format">Format:</label>
+    <select id="img-save-format">
+      <option value="png">PNG</option>
+      <option value="jpeg">JPEG</option>
+      <option value="webp">WebP</option>
+    </select>
+    <button id="img-save-dl-btn">Download</button>
+    <button id="img-save-cancel-btn">Cancel</button>
+    <br>
+    <canvas id="img-save-preview" width="400" height="200"></canvas>
+  </div>
+  <script>
+    // FONTS
+    const AVAILABLE_FONTS = [
+      { name: 'Arial', value: 'Arial, sans-serif', class: 'font-arial' },
+      { name: 'Trebuchet MS', value: '\'Trebuchet MS\', sans-serif', class: 'font-trebuchet' },
+      { name: 'Roboto', value: '\'Roboto\', Arial, sans-serif', class: 'font-roboto' },
+      { name: 'Montserrat', value: '\'Montserrat\', Arial, sans-serif', class: 'font-montserrat' },
+      { name: 'Open Sans', value: '\'Open Sans\', Arial, sans-serif', class: 'font-open-sans' },
+      { name: 'Oswald', value: '\'Oswald\', Arial, sans-serif', class: 'font-oswald' },
+      { name: 'Fira Mono', value: '\'Fira Mono\', monospace', class: 'font-fira-mono' },
+      { name: 'Times New Roman', value: '\'Times New Roman\', Times, serif', class: 'font-times' },
+      { name: 'Pacifico', value: '\'Pacifico\', cursive', class: 'font-pacifico' }
+    ];
+    const FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 40];
+    let zIndex = 10, copiedBoxData = null;
+    function makeDraggable(el) {
+      let offsetX = 0, offsetY = 0, isDown = false;
+      el.addEventListener('mousedown', function(e) {
+        if (e.target.classList.contains('resize-handle') || e.target.classList.contains('customize-btn') || e.target.closest('.customize-panel') || e.target.tagName === 'TEXTAREA') return;
+        isDown = true;
+        el.style.zIndex = ++zIndex;
+        offsetX = e.clientX - el.offsetLeft;
+        offsetY = e.clientY - el.offsetTop;
+        document.body.style.userSelect = 'none';
+        selectBox(el, e.shiftKey);
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!isDown) return;
+        el.style.left = (e.clientX - offsetX) + 'px';
+        el.style.top = (e.clientY - offsetY) + 'px';
+      });
+      document.addEventListener('mouseup', function() {
+        isDown = false;
+        document.body.style.userSelect = '';
+      });
+    }
+    function makeResizable(box) {
+      const handle = box.querySelector('.resize-handle');
+      let isResizing = false, startX = 0, startY = 0, startW = 0, startH = 0;
+      handle.addEventListener('mousedown', function(e) {
+        e.stopPropagation();
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startW = box.offsetWidth;
+        startH = box.offsetHeight;
+        box.style.zIndex = ++zIndex;
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        const w = Math.max(100, startW + (e.clientX - startX));
+        const h = Math.max(50, startH + (e.clientY - startY));
+        box.style.width = w + 'px';
+        box.style.height = h + 'px';
+      });
+      document.addEventListener('mouseup', function() {
+        isResizing = false;
+        document.body.style.userSelect = '';
+      });
+    }
+    function setBoxBorder(box, px, color) {
+      box.style.border = px + 'px solid ' + color;
+    }
+    function setFontStyle(box, value, size) {
+      const textarea = box.querySelector('textarea');
+      textarea.style.fontFamily = value;
+      textarea.style.fontSize = size + 'px';
+    }
+    function bringToFront(box) {
+      zIndex++;
+      box.style.zIndex = zIndex;
+    }
+    function sendToBack(box) {
+      let minZ = Math.min(...Array.from(document.querySelectorAll('.box')).map(b => parseInt(b.style.zIndex||'1',10)));
+      box.style.zIndex = minZ-1;
+    }
+    function makeCustomizable(box) {
+      const customizeBtn = box.querySelector('.customize-btn');
+      const customizePanel = box.querySelector('.customize-panel');
+      document.addEventListener('mousedown', function(e) {
+        if (!box.contains(e.target)) customizePanel.style.display = 'none';
+      });
+      customizeBtn.onclick = function(e) {
+        e.stopPropagation();
+        bringToFront(box);
+        customizePanel.style.zIndex = zIndex+1;
+        customizePanel.style.display = 'block';
+        selectBox(box, false);
+      };
+      customizePanel.querySelectorAll('input, select').forEach(function(input){
+        input.oninput = function() {
+          const bgColor = customizePanel.querySelector('input[name="bg-color"]').value;
+          const bgAlpha = customizePanel.querySelector('input[name="bg-alpha"]').value;
+          const borderColor = customizePanel.querySelector('input[name="border-color"]').value;
+          const borderThickness = customizePanel.querySelector('input[name="border-thickness"]').value;
+          const fontFamily = customizePanel.querySelector('select[name="font-family"]').value;
+          const fontSize = customizePanel.querySelector('select[name="font-size"]').value;
+          box.style.background = hexToRgba(bgColor, bgAlpha);
+          setBoxBorder(box, borderThickness, borderColor);
+          setFontStyle(box, fontFamily, fontSize);
+        };
+      });
+      const bringBtn = customizePanel.querySelector('.reorder-front');
+      const backBtn = customizePanel.querySelector('.reorder-back');
+      bringBtn.onclick = e => { e.stopPropagation(); bringToFront(box); };
+      backBtn.onclick = e => { e.stopPropagation(); sendToBack(box); };
+      function hexToRgba(hex, alpha) {
+        let c;
+        if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+            c= hex.substring(1).split('');
+            if(c.length== 3){
+                c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+            }
+            c= '0x'+c.join('');
+            return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')';
+        }
+        return hex;
+      }
+    }
+    function getFontsDropdownHTML(selected) {
+      let html = '';
+      for(const f of AVAILABLE_FONTS){
+        html += `<option value="${f.value}" class="${f.class}" style="font-family:${f.value}" ${selected===f.value?'selected':''}>${f.name}</option>`;
+      }
+      return html;
+    }
+    function getFontSizesDropdownHTML(selected) {
+      let html = '';
+      for(const size of FONT_SIZES) {
+        html += `<option value="${size}" ${size==selected?'selected':''}>${size}px</option>`;
+      }
+      return html;
+    }
+    function getBoxData(box) {
+      const textarea = box.querySelector('textarea');
+      return {
+        top: parseInt(box.style.top, 10),
+        left: parseInt(box.style.left, 10),
+        width: box.style.width,
+        height: box.style.height,
+        background: box.style.background,
+        border: box.style.border,
+        textarea: textarea.value,
+        fontFamily: textarea.style.fontFamily,
+        fontSize: textarea.style.fontSize
+      };
+    }
+    function setBoxData(box, data) {
+      box.style.top = (data.top + 20) + 'px';
+      box.style.left = (data.left + 20) + 'px';
+      if(data.width) box.style.width = data.width;
+      if(data.height) box.style.height = data.height;
+      if(data.background) box.style.background = data.background;
+      if(data.border) box.style.border = data.border;
+      const textarea = box.querySelector('textarea');
+      textarea.value = data.textarea || '';
+      if(data.fontFamily) textarea.style.fontFamily = data.fontFamily;
+      if(data.fontSize) textarea.style.fontSize = data.fontSize;
+    }
+    // Multi-selection support
+    function selectBox(box, multi) {
+      const all = document.querySelectorAll('.box');
+      if (!multi) all.forEach(b=>b.classList.remove('multi-selected', 'selected'));
+      if (box) {
+        if (multi) {
+          if (box.classList.contains('multi-selected')) box.classList.remove('multi-selected'); else box.classList.add('multi-selected');
+        } else {
+          box.classList.add('selected');
+          box.classList.remove('multi-selected');
+        }
+      }
+    }
+    document.body.addEventListener('mousedown', function(e) {
+      if(!e.target.closest('.box')) {
+        document.querySelectorAll('.box').forEach(b=>b.classList.remove('selected','multi-selected'));
+      }
+    });
+    function createBox(data) {
+      const defaultFont = 'Arial, sans-serif';
+      const defaultFontSize = 15;
+      const box = document.createElement('div');
+      box.className = 'box';
+      box.tabIndex = 0;
+      box.style.left = (data && data.left ? data.left + 20 : 50) + 'px';
+      box.style.top = (data && data.top ? data.top + 20 : 50) + 'px';
+      box.style.width = (data && data.width) ? data.width : '200px';
+      box.style.height = (data && data.height) ? data.height : '100px';
+      box.style.background = (data && data.background) ? data.background : 'rgba(249,249,249,1)';
+      box.style.border = (data && data.border) ? data.border : '2px solid #3498db';
+      const fontFamily = (data && data.fontFamily) ? data.fontFamily : defaultFont;
+      const fontSize = (data && data.fontSize) ? data.fontSize : defaultFontSize + 'px';
+      let dropdownFontValue = fontFamily;
+      let dropdownFontSizeValue = fontSize.replace('px','');
+      if(!FONT_SIZES.includes(Number(dropdownFontSizeValue))) dropdownFontSizeValue = 15;
+      box.innerHTML = `
+        <button class="customize-btn" title="Customize"><svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7zm7.43-2.11c.04-.3.07-.62.07-.89s-.03-.59-.07-.89l2.11-1.65c.18-.14.23-.41.12-.61l-2-3.46c-.12-.2-.38-.26-.57-.16l-2.49 1c-.52-.4-1.07-.73-1.69-.98l-.38-2.65A.483.483 0 0 0 14 2h-4c-.24 0-.44.17-.48.41l-.38 2.65c-.62.25-1.2.58-1.7.98l-2.49-1a.492.492 0 0 0-.57.16l-2 3.46a.49.49 0 0 0 .12.61l2.11 1.65c-.04.3-.07.62-.07.89s.03.59.07.89l-2.11 1.65a.475.475 0 0 0-.12.61l2 3.46c.12.2.38.26.57.16l2.49-1c.52.4 1.07.73 1.7.98l.38 2.65c.03.24.23.41.48.41h4c.24 0 .44-.17.48-.41l.38-2.65c.62-.25 1.17-.58 1.69-.98l2.49 1c.2.1.45.04.57-.16l2-3.46a.49.49 0 0 0-.12-.61l-2.11-1.65z"></path></svg></button>
+        <div class="customize-panel">
+          <div class="customize-panel-row reorder-row">
+            <button class="reorder-btn reorder-front">Bring to Front</button>
+            <button class="reorder-btn reorder-back">Send to Back</button>
+          </div>
+          <div class="customize-panel-row">
+            <label>Background</label>
+            <input type="color" name="bg-color" value="#f9f9f9">
+            <label>Alpha</label>
+            <input type="range" name="bg-alpha" min="0" max="1" step="0.01" value="1">
+          </div>
+          <div class="customize-panel-row">
+            <label>Border</label>
+            <input type="color" name="border-color" value="#3498db">
+            <label>Thickness</label>
+            <input type="range" name="border-thickness" min="1" max="20" step="1" value="2">
+          </div>
+          <div class="customize-panel-row">
+            <label>Font</label>
+            <select class="font-select" name="font-family" style="font-family:${fontFamily}">
+              ${getFontsDropdownHTML(dropdownFontValue)}
+            </select>
+            <label>Size</label>
+            <select class="fontsize-select" name="font-size">
+              ${getFontSizesDropdownHTML(dropdownFontSizeValue)}
+            </select>
+          </div>
+        </div>
+        <textarea placeholder="Write here..." style="font-family:${fontFamily}; font-size:${fontSize}">${data && data.textarea ? data.textarea : ''}</textarea>
+        <div class="resize-handle"></div>
+      `;
+      document.body.appendChild(box);
+      makeDraggable(box);
+      makeResizable(box);
+      makeCustomizable(box);
+      box.querySelector('textarea').focus();
+      box.addEventListener('mousedown', e => { selectBox(box, e.shiftKey); });
+      const fontSelect = box.querySelector('select[name="font-family"]');
+      fontSelect.onchange = function() {
+        fontSelect.style.fontFamily = fontSelect.value;
+        box.querySelector('textarea').style.fontFamily = fontSelect.value;
+      };
+      fontSelect.value = fontFamily;
+      const fontSizeSelect = box.querySelector('select[name="font-size"]');
+      fontSizeSelect.onchange = function() {
+        box.querySelector('textarea').style.fontSize = fontSizeSelect.value + 'px';
+      };
+      fontSizeSelect.value = dropdownFontSizeValue;
+      return box;
+    }
+    document.getElementById('addBoxBtn').onclick = function() { createBox(); };
+    document.addEventListener('keydown', function(e) {
+      const all = document.querySelectorAll('.box.selected, .box.multi-selected');
+      let one = all.length===1 ? all[0] : document.querySelector('.box.selected');
+      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && one){
+        copiedBoxData = getBoxData(one);
+        e.preventDefault();
+      } else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v' && copiedBoxData) {
+        createBox(copiedBoxData);
+        e.preventDefault();
+      }
+    });
+    // ==== High-quality image export of selected boxes only ====
+    function RGBAbg(str) {
+      let ctx = document.createElement('canvas').getContext('2d');
+      ctx.fillStyle = str; return ctx.fillStyle;
+    }
+    function getBoxExportData(box) {
+      const borderPx = parseInt((box.style.border.match(/\d+/)||['2'])[0]);
+      return {
+        left: Number(box.style.left.replace('px', '')),
+        top: Number(box.style.top.replace('px', '')),
+        width: Number(box.style.width.replace('px', '')),
+        height: Number(box.style.height.replace('px', '')),
+        textarea: box.querySelector('textarea').value,
+        background: box.style.background,
+        border: box.style.border,
+        borderColor: box.style.borderColor || (box.style.border.match(/#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3}|rgba?\([^\)]+\)|[a-zA-Z0-9]+/g) || ['#3498db'])[1],
+        borderWidth: borderPx,
+        font: box.querySelector('textarea').style.fontFamily,
+        fontSize: parseInt(box.querySelector('textarea').style.fontSize) || 15,
+        color: box.querySelector('textarea').style.color || '#203040',
+        borderRadius: parseInt((box.style.borderRadius||'11').replace('px',''))
+      };
+    }
+    function drawBoxesToCanvas(boxes, bgColor, format, preview) {
+      // Get bounds of all selected boxes
+      const datas = boxes.map(getBoxExportData);
+      const allLefts = datas.map(d=>d.left);
+      const allTops = datas.map(d=>d.top);
+      const left = Math.min(...allLefts);
+      const top = Math.min(...allTops);
+      const right = Math.max(...datas.map(d=>d.left+d.width+d.borderWidth*2));
+      const bottom = Math.max(...datas.map(d=>d.top+d.height+d.borderWidth*2));
+      const width = right-left;
+      const height = bottom-top;
+      // HiDPI canvas for sharpness
+      const scale = preview ? 1.6 : window.devicePixelRatio || 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(width*scale);
+      canvas.height = Math.ceil(height*scale);
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      ctx.fillStyle = RGBAbg(bgColor);
+      ctx.fillRect(0, 0, width, height);
+      datas.forEach(d => {
+        // Draw box background & border
+        const x = d.left-left;
+        const y = d.top-top;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x + d.borderRadius, y);
+        ctx.lineTo(x+d.width-d.borderRadius, y);
+        ctx.arcTo(x+d.width, y, x+d.width, y+d.borderRadius, d.borderRadius);
+        ctx.lineTo(x+d.width, y+d.height-d.borderRadius);
+        ctx.arcTo(x+d.width, y+d.height, x+d.width-d.borderRadius, y+d.height, d.borderRadius);
+        ctx.lineTo(x+d.borderRadius, y+d.height);
+        ctx.arcTo(x, y+d.height, x, y+d.height-d.borderRadius, d.borderRadius);
+        ctx.lineTo(x, y+d.borderRadius);
+        ctx.arcTo(x, y, x+d.borderRadius, y, d.borderRadius);
+        ctx.closePath();
+        ctx.fillStyle = d.background;
+        ctx.fill();
+        // Border
+        if(d.borderWidth>0){
+          ctx.strokeStyle = d.borderColor;
+          ctx.lineWidth = d.borderWidth;
+          ctx.stroke();
+        }
+        // Text!
+        ctx.clip();
+        ctx.font = d.fontSize + 'px ' + d.font;
+        ctx.fillStyle = d.color;
+        ctx.textBaseline = 'top';
+        ctx.save();
+        const textLines = d.textarea.split(/\r?\n/);
+        let textY = y+15;
+        for(const line of textLines){
+          ctx.fillText(line, x+14, textY);
+          textY += d.fontSize+7;
+        }
+        ctx.restore();
+        ctx.restore();
+      });
+      return {canvas, x: left, y: top, width, height};
+    }
+    // --- Advanced Save Dialog ---
+    function openImageExportBox() {
+      const boxes = Array.from(document.querySelectorAll('.box.selected, .box.multi-selected'));
+      if (boxes.length === 0) {
+        alert('Select one or more boxes to export! (Click or shift+click)');
+        return;
+      }
+      document.getElementById('box-count').innerText = boxes.length;
+      document.getElementById('img-advanced-save').style.display = 'block';
+      previewImageExport();
+    }
+    function previewImageExport() {
+      const boxes = Array.from(document.querySelectorAll('.box.selected, .box.multi-selected'));
+      let bgColor = document.getElementById('img-save-bgcolor').value;
+      let format = document.getElementById('img-save-format').value;
+      let preview = drawBoxesToCanvas(boxes, bgColor, format, true);
+      let can = document.getElementById('img-save-preview');
+      can.width = preview.width*1.6; can.height = preview.height*1.6;
+      let ctx = can.getContext('2d');
+      ctx.drawImage(preview.canvas,0,0,preview.width*1.6,preview.height*1.6);
+      // Optionally scale preview to fit in box, but preserve sharpness when saving
+    }
+    document.getElementById('img-save-bgcolor').oninput = previewImageExport;
+    document.getElementById('img-save-format').onchange = previewImageExport;
+    document.getElementById('img-save-dl-btn').onclick = function(){
+      const boxes = Array.from(document.querySelectorAll('.box.selected, .box.multi-selected'));
+      let bgColor = document.getElementById('img-save-bgcolor').value;
+      let format = document.getElementById('img-save-format').value;
+      let preview = drawBoxesToCanvas(boxes, bgColor, format, false);
+      let dataURL;
+      if (format==='jpeg') dataURL = preview.canvas.toDataURL('image/jpeg', 0.96);
+      else if (format==='webp') dataURL = preview.canvas.toDataURL('image/webp', 0.96);
+      else dataURL = preview.canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataURL;
+      a.download = 'exported-boxes.'+format;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      document.getElementById('img-advanced-save').style.display = 'none';
+    };
+    document.getElementById('img-save-cancel-btn').onclick = function(){
+      document.getElementById('img-advanced-save').style.display = 'none';
+    };
+    document.getElementById('saveImageBtn').onclick = openImageExportBox;
+  </script>
+</body>
+</html>

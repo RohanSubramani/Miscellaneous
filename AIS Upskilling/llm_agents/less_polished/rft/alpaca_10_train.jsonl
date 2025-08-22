@@ -1,0 +1,10 @@
+{"messages": [{"role": "user", "content": "Cite a relevant quote that reflects the message of the message.\n\nInput:\nMessage: Never give up on your goals."}]}
+{"messages": [{"role": "user", "content": "Given a list of elements, find how many possible combinations of the elements can be made.\n\nInput:\nH, O, C, N"}]}
+{"messages": [{"role": "user", "content": "Design an advertisement for a home security product."}]}
+{"messages": [{"role": "user", "content": "Edit the text to make the meaning more precise.\n\nInput:\nThe President announced an ambitious plan to cut taxes for all Americans."}]}
+{"messages": [{"role": "user", "content": "Given a block of text, come up with a catchy headline that best represents the text.\n\nInput:\nThe new coaching program will help you become a better leader and achieve higher professional success."}]}
+{"messages": [{"role": "user", "content": "Give an example of a web service that could be automated using artificial intelligence."}]}
+{"messages": [{"role": "user", "content": "Explain the engineering design process."}]}
+{"messages": [{"role": "user", "content": "What are the advantages of using a Scrum Agile methodology?"}]}
+{"messages": [{"role": "user", "content": "Answer this question: \"What are the advantages of using AI in healthcare?\""}]}
+{"messages": [{"role": "user", "content": "Generate two similar sounding but semantically different words to contrast this word.\n\nInput:\nLight"}]}

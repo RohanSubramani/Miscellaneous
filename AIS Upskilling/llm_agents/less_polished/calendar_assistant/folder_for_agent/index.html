@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elegant Blog</title>
+    <style>
+        /* Reset some basic elements */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            background: #f9f9f9;
+            color: #333;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        header {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #222;
+            letter-spacing: 1px;
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        nav a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #000;
+        }
+        .post {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        .post:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        h2.post-title {
+            font-size: 1.8rem;
+            color: #222;
+            margin-bottom: 10px;
+        }
+        time {
+            font-size: 0.9rem;
+            color: #999;
+        }
+        p.post-content {
+            margin-top: 10px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: #444;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            header h1 {
+                font-size: 1.8rem;
+            }
+            .post {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Elegant Blog</h1>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <article class="post">
+        <h2 class="post-title">Welcome to Elegant Blog</h2>
+        <time datetime="2024-06-01">June 1, 2024</time>
+        <p class="post-content">
+            This is a clean, sophisticated, and well-designed blog layout with excellent code practices. The design is responsive, accessible, and visually appealing.
+        </p>
+    </article>
+
+    <article class="post">
+        <h2 class="post-title">Getting Started</h2>
+        <time datetime="2024-06-02">June 2, 2024</time>
+        <p class="post-content">
+            Start posting your thoughts and ideas here. This layout supports easy reading and navigation.
+        </p>
+    </article>
+
+    <footer>
+        &copy; 2024 Elegant Blog. All rights reserved.
+    </footer>
+</body>
+</html>
