@@ -1,0 +1,10 @@
+#!/bin/sh
+'''exec' "/Users/rohansubramani/repos/Miscellaneous/AIS Upskilling/llm_agents/less_polished/arml_project/arml_agent_test/bin/python3" "$0" "$@"
+' '''
+# -*- coding: utf-8 -*-
+import re
+import sys
+from httpx import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())

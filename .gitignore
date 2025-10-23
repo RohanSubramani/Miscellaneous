@@ -1,3 +1,10 @@
+# Models
+*.pt
+*model.safetensors*
+
+venvs
+*venv*
+
 # Python cache files
 __pycache__/
 *.py[cod]
