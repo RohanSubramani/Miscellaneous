@@ -1,0 +1,1155 @@
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const adviceInput = document.getElementById('adviceInput');
+        const adviceSendButton = document.getElementById('adviceSendButton');
+        const adviceMessagesContainer = document.getElementById('adviceMessagesContainer');
+        const environmentSelect = document.getElementById('environmentSelect');
+        const mazeVisualization = document.getElementById('mazeVisualization');
+        const mazeGridContainer = document.getElementById('mazeGridContainer');
+        const mazeConfig = document.getElementById('mazeConfig');
+        const numRoomsInput = document.getElementById('numRoomsInput');
+        const seedInput = document.getElementById('seedInput');
+        const mazeRegenerateButton = document.getElementById('mazeRegenerateButton');
+        const memoryContent = document.getElementById('memoryContent');
+        const retrievalDisplay = document.getElementById('retrievalDisplay');
+        const retrievalContent = document.getElementById('retrievalContent');
+        const retrievalLoading = document.getElementById('retrievalLoading');
+        const retrievalStatus = document.getElementById('retrievalStatus');
+        
+        const API_PORT = 8080;
+        const API_BASE = `http://localhost:${API_PORT}`;
+        
+        let chatId = 'default';
+        let pendingConfirmation = null;
+        let adviceMessages = [];
+        let currentEnvironment = 'maze';
+        let availableEnvironments = [];
+        let mazeStateInterval = null;
+        let retrievalEntryCounter = 0; // Counter for numbering retrieval entries
+
+        function getMemoryList() {
+            const memoryBoxes = memoryContent.querySelectorAll('.memory-message-box');
+            const memoryList = [];
+            memoryBoxes.forEach(box => {
+                const textDiv = box.querySelector('div');
+                if (textDiv) {
+                    memoryList.push(textDiv.textContent.trim());
+                }
+            });
+            return memoryList;
+        }
+
+        async function updateMemoryOnServer() {
+            try {
+                await fetch(`${API_BASE}/update_memory`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        memory: getMemoryList()
+                    })
+                });
+            } catch (error) {
+                console.error('Error updating memory on server:', error);
+            }
+        }
+
+        function displayRetrieval(step) {
+            // Increment counter for this retrieval entry
+            retrievalEntryCounter++;
+            
+            const container = document.createElement('div');
+            container.style.marginBottom = '12px';
+            container.style.borderBottom = '1px solid #E0E0E0';
+            container.style.paddingBottom = '12px';
+            
+            // Add entry number header
+            const entryHeader = document.createElement('div');
+            entryHeader.style.fontWeight = 'bold';
+            entryHeader.style.fontSize = '14px';
+            entryHeader.style.marginBottom = '8px';
+            entryHeader.style.color = '#1976D2';
+            entryHeader.textContent = `Retrieval Entry #${retrievalEntryCounter}`;
+            container.appendChild(entryHeader);
+            
+            if (step.prompt) {
+                const promptDiv = document.createElement('div');
+                promptDiv.className = 'retrieval-prompt';
+                promptDiv.textContent = `Prompt:\n${step.prompt}`;
+                container.appendChild(promptDiv);
+            }
+            
+            if (step.response) {
+                const responseDiv = document.createElement('div');
+                responseDiv.className = 'retrieval-response';
+                responseDiv.textContent = `Response:\n${step.response}`;
+                container.appendChild(responseDiv);
+            }
+            
+            if (step.retrieved_memories && step.retrieved_memories.length > 0) {
+                const memoriesDiv = document.createElement('div');
+                memoriesDiv.className = 'retrieval-memories';
+                const memText = step.retrieved_memories.map(m => 
+                    `Memory ${m.number}: ${m.context || '(no context)'}`
+                ).join('\n');
+                memoriesDiv.textContent = `Retrieved:\n${memText}`;
+                container.appendChild(memoriesDiv);
+            } else if (step.retrieved_memories !== null && step.retrieved_memories !== undefined && step.retrieved_memories.length === 0) {
+                // Explicitly skipped
+                const skippedDiv = document.createElement('div');
+                skippedDiv.className = 'retrieval-memories';
+                skippedDiv.style.background = '#FFF3E0';
+                skippedDiv.textContent = 'Skipped: No memories retrieved';
+                container.appendChild(skippedDiv);
+            }
+            
+            retrievalContent.appendChild(container);
+            retrievalContent.scrollTop = retrievalContent.scrollHeight;
+        }
+
+        function addRetrievalMessage(step) {
+            if (!step.retrieved_memories || step.retrieved_memories.length === 0) {
+                return;
+            }
+            
+            const memoryList = getMemoryList();
+            const memoryContextParts = [];
+            
+            for (const memItem of step.retrieved_memories) {
+                const memNum = memItem.number || 0;
+                const memContext = memItem.context || '';
+                if (1 <= memNum && memNum <= memoryList.length) {
+                    const memText = memoryList[memNum - 1];
+                    if (memContext) {
+                        memoryContextParts.push(`Memory ${memNum}: ${memText}\nContext: ${memContext}`);
+                    } else {
+                        memoryContextParts.push(`Memory ${memNum}: ${memText}`);
+                    }
+                }
+            }
+            
+            if (memoryContextParts.length > 0) {
+                const memoryContext = `Relevant memories retrieved:\n${memoryContextParts.join('\n\n')}`;
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message retrieval';
+                
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.textContent = memoryContext;
+                
+                messageDiv.appendChild(bubble);
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+
+        function addMessage(role, content, isAdvice = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}${isAdvice ? ' advice' : ''}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = content;
+            
+            messageDiv.appendChild(bubble);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageDiv;
+        }
+
+        function addLoadingMessage(modelName) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant loading-message';
+            messageDiv.id = 'current-loading-message';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = `${modelName} is generating...`;
+            
+            messageDiv.appendChild(bubble);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageDiv;
+        }
+
+        function removeLoadingMessage() {
+            const loadingMsg = document.getElementById('current-loading-message');
+            if (loadingMsg) {
+                loadingMsg.remove();
+            }
+        }
+
+        function addAdviceMessageBox(message) {
+            const messageBox = document.createElement('div');
+            messageBox.className = 'advice-message-box';
+            
+            const messageText = document.createElement('div');
+            messageText.textContent = message;
+            messageText.style.paddingRight = '80px'; // Make room for button
+            messageBox.appendChild(messageText);
+            
+            const addBtn = document.createElement('button');
+            addBtn.className = 'add-to-memory-btn';
+            addBtn.textContent = 'Add to memory';
+            addBtn.onclick = () => moveToMemory(message, messageBox);
+            messageBox.appendChild(addBtn);
+            
+            adviceMessagesContainer.appendChild(messageBox);
+            adviceMessagesContainer.scrollTop = adviceMessagesContainer.scrollHeight;
+        }
+
+        function addMemoryMessageBox(message) {
+            const messageBox = document.createElement('div');
+            messageBox.className = 'memory-message-box';
+            
+            const messageText = document.createElement('div');
+            messageText.textContent = message;
+            messageText.style.paddingRight = '100px'; // Make room for button
+            messageBox.appendChild(messageText);
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-from-memory-btn';
+            removeBtn.textContent = 'Remove from memory';
+            removeBtn.onclick = () => removeFromMemory(messageBox);
+            messageBox.appendChild(removeBtn);
+            
+            memoryContent.appendChild(messageBox);
+            memoryContent.scrollTop = memoryContent.scrollHeight;
+        }
+
+        function moveToMemory(message, adviceBox) {
+            // Remove from advice section
+            adviceBox.remove();
+            // Add to memory section
+            addMemoryMessageBox(message);
+            // Update server
+            updateMemoryOnServer();
+        }
+
+        function removeFromMemory(memoryBox) {
+            memoryBox.remove();
+            // Update server
+            updateMemoryOnServer();
+        }
+
+        async function sendAdviceMessage() {
+            const message = adviceInput.value.trim();
+            if (!message || adviceSendButton.disabled) return;
+            
+            // Add to advice messages array
+            adviceMessages.push(message);
+            addAdviceMessageBox(message);
+            
+            // Clear input
+            adviceInput.value = '';
+            
+            // Send to chat as user message (with advice styling)
+            addMessage('user', message, true);
+            setLoading(true);
+            
+            let modelName = 'Model';
+            let loadingMessage = null;
+            
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        chat_id: chatId,
+                        memory: getMemoryList()
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'model_info') {
+                                    modelName = data.model;
+                                    // Don't show agent loading yet - wait for retriever to finish
+                                } else if (data.type === 'retriever_generating') {
+                                    retrievalLoading.style.display = 'inline-block';
+                                    retrievalStatus.textContent = ' Retrieving memories...';
+                                } else if (data.type === 'retrieval') {
+                                    retrievalLoading.style.display = 'none';
+                                    retrievalStatus.textContent = '';
+                                    displayRetrieval(data);
+                                    addRetrievalMessage(data);
+                                    // Now that retrieval is done, show agent loading if we have model name
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                } else if (data.type === 'tool_calls') {
+                                    // Show agent loading if we haven't yet (no retrieval happened)
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                    removeLoadingMessage();
+                                    if (data.content) {
+                                        addMessage('assistant', data.content);
+                                    }
+                                    data.tool_calls.forEach(toolCall => {
+                                        addToolCall(toolCall);
+                                    });
+                                } else if (data.type === 'tool_result') {
+                                    addToolResult(data);
+                                } else if (data.type === 'assistant_message') {
+                                    // Show agent loading if we haven't yet (no retrieval happened)
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                    removeLoadingMessage();
+                                    addMessage('assistant', data.content);
+                                } else if (data.type === 'reasoning') {
+                                    addReasoning(data);
+                                } else if (data.type === 'needs_confirmation') {
+                                    removeLoadingMessage();
+                                    pendingConfirmation = data.confirmation_tool_call;
+                                    showConfirmationModal(data.confirmation_tool_call);
+                                    return;
+                                } else if (data.type === 'done') {
+                                    removeLoadingMessage();
+                                } else if (data.type === 'error') {
+                                    removeLoadingMessage();
+                                    addMessage('assistant', `Error: ${data.error}`);
+                                }
+                            } catch (e) {
+                                console.error('Error parsing SSE data:', e);
+                            }
+                        }
+                    }
+                }
+                
+                // Update maze state after processing
+                if (currentEnvironment === 'maze') {
+                    updateMazeState();
+                }
+            } catch (error) {
+                removeLoadingMessage();
+                addMessage('assistant', `Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+                adviceInput.focus();
+            }
+        }
+
+        function addToolCall(toolCall) {
+            const toolDiv = document.createElement('div');
+            toolDiv.className = 'tool-call';
+            
+            const header = document.createElement('div');
+            header.className = 'tool-call-header';
+            header.textContent = '🔧 Tool Call';
+            
+            const name = document.createElement('div');
+            name.className = 'tool-call-name';
+            name.textContent = `Function: ${toolCall.name}`;
+            
+            const args = document.createElement('div');
+            args.className = 'tool-call-args';
+            args.textContent = `Arguments: ${JSON.stringify(toolCall.arguments, null, 2)}`;
+            
+            toolDiv.appendChild(header);
+            toolDiv.appendChild(name);
+            toolDiv.appendChild(args);
+            
+            chatContainer.appendChild(toolDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addToolResult(toolResult) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'tool-result';
+            
+            const header = document.createElement('div');
+            header.className = 'tool-result-header';
+            header.textContent = `✓ Tool Result: ${toolResult.tool_name}`;
+            
+            const content = document.createElement('div');
+            content.className = 'tool-result-content';
+            content.textContent = JSON.stringify(toolResult.result, null, 2);
+            
+            resultDiv.appendChild(header);
+            resultDiv.appendChild(content);
+            
+            chatContainer.appendChild(resultDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addReasoning(reasoning) {
+            const reasoningDiv = document.createElement('div');
+            reasoningDiv.className = 'reasoning';
+            
+            const header = document.createElement('div');
+            header.className = 'reasoning-header';
+            header.textContent = `💭 Reasoning (Option ${reasoning.continue_option}): ${reasoning.continue_description}`;
+            
+            const content = document.createElement('div');
+            content.textContent = reasoning.reasoning;
+            
+            reasoningDiv.appendChild(header);
+            reasoningDiv.appendChild(content);
+            
+            chatContainer.appendChild(reasoningDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showConfirmationModal(toolCall) {
+            const modal = document.createElement('div');
+            modal.className = 'confirmation-modal';
+            modal.id = 'confirmationModal';
+            
+            const dialog = document.createElement('div');
+            dialog.className = 'confirmation-dialog';
+            
+            const title = document.createElement('div');
+            title.className = 'confirmation-title';
+            title.textContent = 'Confirm Tool Execution';
+            
+            const message = document.createElement('div');
+            message.className = 'confirmation-message';
+            message.textContent = `The agent wants to execute: ${toolCall.name}`;
+            
+            const toolInfo = document.createElement('div');
+            toolInfo.className = 'confirmation-tool-info';
+            toolInfo.textContent = JSON.stringify(toolCall.arguments, null, 2);
+            
+            const buttons = document.createElement('div');
+            buttons.className = 'confirmation-buttons';
+            
+            const approveButton = document.createElement('button');
+            approveButton.className = 'confirmation-button approve';
+            approveButton.textContent = 'Approve';
+            approveButton.onclick = () => handleConfirmation(true, toolCall);
+            
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'confirmation-button cancel';
+            cancelButton.textContent = 'Cancel';
+            cancelButton.onclick = () => handleConfirmation(false, toolCall);
+            
+            buttons.appendChild(cancelButton);
+            buttons.appendChild(approveButton);
+            
+            dialog.appendChild(title);
+            dialog.appendChild(message);
+            dialog.appendChild(toolInfo);
+            dialog.appendChild(buttons);
+            modal.appendChild(dialog);
+            
+            document.body.appendChild(modal);
+        }
+
+        function removeConfirmationModal() {
+            const modal = document.getElementById('confirmationModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        async function handleConfirmation(approved, toolCall) {
+            removeConfirmationModal();
+            pendingConfirmation = null;
+            
+            setLoading(true);
+            
+            let modelName = 'Model';
+            let loadingMessage = null;
+            
+            try {
+                const response = await fetch(`${API_BASE}/confirm_tool`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        approved: approved,
+                        tool_call: toolCall,
+                        memory: getMemoryList()
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'model_info') {
+                                    modelName = data.model;
+                                    // Don't show agent loading yet - wait for retriever to finish
+                                } else if (data.type === 'retriever_generating') {
+                                    retrievalLoading.style.display = 'inline-block';
+                                    retrievalStatus.textContent = ' Retrieving memories...';
+                                } else if (data.type === 'retrieval') {
+                                    retrievalLoading.style.display = 'none';
+                                    retrievalStatus.textContent = '';
+                                    displayRetrieval(data);
+                                    addRetrievalMessage(data);
+                                    // Now that retrieval is done, show agent loading if we have model name
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                } else if (data.type === 'tool_calls') {
+                                    // Show agent loading if we haven't yet (no retrieval happened)
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                    removeLoadingMessage();
+                                    if (data.content) {
+                                        addMessage('assistant', data.content);
+                                    }
+                                    data.tool_calls.forEach(toolCall => {
+                                        addToolCall(toolCall);
+                                    });
+                                } else if (data.type === 'tool_result') {
+                                    addToolResult(data);
+                                } else if (data.type === 'assistant_message') {
+                                    // Show agent loading if we haven't yet (no retrieval happened)
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                    removeLoadingMessage();
+                                    addMessage('assistant', data.content);
+                                } else if (data.type === 'reasoning') {
+                                    addReasoning(data);
+                                } else if (data.type === 'needs_confirmation') {
+                                    removeLoadingMessage();
+                                    pendingConfirmation = data.confirmation_tool_call;
+                                    showConfirmationModal(data.confirmation_tool_call);
+                                    return;
+                                } else if (data.type === 'done') {
+                                    removeLoadingMessage();
+                                } else if (data.type === 'error') {
+                                    removeLoadingMessage();
+                                    addMessage('assistant', `Error: ${data.error}`);
+                                }
+                            } catch (e) {
+                                console.error('Error parsing SSE data:', e);
+                            }
+                        }
+                    }
+                }
+                
+                // Update maze state after processing
+                if (currentEnvironment === 'maze') {
+                    updateMazeState();
+                }
+            } catch (error) {
+                removeLoadingMessage();
+                addMessage('assistant', `Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+                messageInput.focus();
+            }
+        }
+
+        function processSteps(steps) {
+            steps.forEach(step => {
+                if (step.type === 'assistant_message') {
+                    addMessage('assistant', step.content);
+                } else if (step.type === 'tool_calls') {
+                    if (step.content) {
+                        addMessage('assistant', step.content);
+                    }
+                    step.tool_calls.forEach(toolCall => {
+                        addToolCall(toolCall);
+                    });
+                } else if (step.type === 'tool_result') {
+                    addToolResult(step);
+                } else if (step.type === 'reasoning') {
+                    addReasoning(step);
+                }
+            });
+        }
+
+        function setLoading(loading) {
+            sendButton.disabled = loading;
+            messageInput.disabled = loading;
+            adviceSendButton.disabled = loading;
+            adviceInput.disabled = loading;
+            
+            if (loading) {
+                sendButton.innerHTML = '<div class="loading"></div>';
+                adviceSendButton.innerHTML = '<div class="loading"></div>';
+            } else {
+                sendButton.textContent = 'Send';
+                adviceSendButton.textContent = 'Send';
+            }
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || sendButton.disabled) return;
+            
+            addMessage('user', message);
+            messageInput.value = '';
+            setLoading(true);
+            
+            let modelName = 'Model';
+            let loadingMessage = null;
+            
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        chat_id: chatId,
+                        memory: getMemoryList()
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'model_info') {
+                                    modelName = data.model;
+                                    // Don't show agent loading yet - wait for retriever to finish
+                                } else if (data.type === 'retriever_generating') {
+                                    retrievalLoading.style.display = 'inline-block';
+                                    retrievalStatus.textContent = ' Retrieving memories...';
+                                } else if (data.type === 'retrieval') {
+                                    retrievalLoading.style.display = 'none';
+                                    retrievalStatus.textContent = '';
+                                    displayRetrieval(data);
+                                    addRetrievalMessage(data);
+                                    // Now that retrieval is done, show agent loading if we have model name
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                } else if (data.type === 'tool_calls') {
+                                    // Show agent loading if we haven't yet (no retrieval happened)
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                    removeLoadingMessage();
+                                    if (data.content) {
+                                        addMessage('assistant', data.content);
+                                    }
+                                    data.tool_calls.forEach(toolCall => {
+                                        addToolCall(toolCall);
+                                    });
+                                } else if (data.type === 'tool_result') {
+                                    addToolResult(data);
+                                } else if (data.type === 'assistant_message') {
+                                    // Show agent loading if we haven't yet (no retrieval happened)
+                                    if (modelName && !loadingMessage) {
+                                        loadingMessage = addLoadingMessage(modelName);
+                                    }
+                                    removeLoadingMessage();
+                                    addMessage('assistant', data.content);
+                                } else if (data.type === 'reasoning') {
+                                    addReasoning(data);
+                                } else if (data.type === 'needs_confirmation') {
+                                    removeLoadingMessage();
+                                    pendingConfirmation = data.confirmation_tool_call;
+                                    showConfirmationModal(data.confirmation_tool_call);
+                                    return;
+                                } else if (data.type === 'done') {
+                                    removeLoadingMessage();
+                                } else if (data.type === 'error') {
+                                    removeLoadingMessage();
+                                    addMessage('assistant', `Error: ${data.error}`);
+                                }
+                            } catch (e) {
+                                console.error('Error parsing SSE data:', e);
+                            }
+                        }
+                    }
+                }
+                
+                // Update maze state after processing
+                if (currentEnvironment === 'maze') {
+                    updateMazeState();
+                }
+            } catch (error) {
+                removeLoadingMessage();
+                addMessage('assistant', `Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+                messageInput.focus();
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        adviceSendButton.addEventListener('click', sendAdviceMessage);
+        adviceInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendAdviceMessage();
+            }
+        });
+        
+        // Maze regeneration
+        mazeRegenerateButton.addEventListener('click', async () => {
+            const numRooms = parseInt(numRoomsInput.value) || 3;
+            const seedValue = seedInput.value ? parseInt(seedInput.value) : null;
+            
+            if (numRooms < 3 || numRooms > 50) {
+                alert('Number of rooms must be between 3 and 50');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/maze/regenerate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        num_rooms: numRooms,
+                        seed: seedValue
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Update visualization and inputs with new state
+                    updateMazeState(true);
+                    // Add system message about regeneration
+                    addMessage('system', `Maze regenerated with ${numRooms} rooms.`);
+                } else {
+                    alert('Failed to regenerate maze: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error regenerating maze:', error);
+                alert('Failed to regenerate maze');
+            }
+        });
+
+        function showEnvironmentSwitchModal(newEnvId, newEnvName) {
+            const modal = document.createElement('div');
+            modal.className = 'env-switch-modal';
+            modal.id = 'envSwitchModal';
+            
+            const dialog = document.createElement('div');
+            dialog.className = 'confirmation-dialog';
+            
+            const title = document.createElement('div');
+            title.className = 'confirmation-title';
+            title.textContent = 'Switch Environment?';
+            
+            const message = document.createElement('div');
+            message.className = 'confirmation-message';
+            message.textContent = `Switching to "${newEnvName}" will reset your current conversation. All previous messages will be lost. Do you want to continue?`;
+            
+            const buttons = document.createElement('div');
+            buttons.className = 'confirmation-buttons';
+            
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'confirmation-button cancel';
+            cancelButton.textContent = 'Cancel';
+            cancelButton.onclick = () => {
+                document.getElementById('envSwitchModal').remove();
+                // Reset dropdown to current environment
+                environmentSelect.value = currentEnvironment;
+            };
+            
+            const confirmButton = document.createElement('button');
+            confirmButton.className = 'confirmation-button approve';
+            confirmButton.textContent = 'Switch';
+            confirmButton.onclick = () => switchEnvironment(newEnvId);
+            
+            buttons.appendChild(cancelButton);
+            buttons.appendChild(confirmButton);
+            
+            dialog.appendChild(title);
+            dialog.appendChild(message);
+            dialog.appendChild(buttons);
+            modal.appendChild(dialog);
+            
+            document.body.appendChild(modal);
+        }
+
+        async function switchEnvironment(envId) {
+            // Remove modal
+            const modal = document.getElementById('envSwitchModal');
+            if (modal) {
+                modal.remove();
+            }
+            
+            setLoading(true);
+            
+            try {
+                const response = await fetch(`${API_BASE}/set_environment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        environment: envId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentEnvironment = envId;
+                    
+                    // Clear chat container
+                    chatContainer.innerHTML = '';
+                    
+                    // Clear advice messages
+                    adviceMessages = [];
+                    adviceMessagesContainer.innerHTML = '';
+                    
+                    // Handle maze visualization
+                    if (envId === 'maze') {
+                        startMazeStatePolling();
+                    } else {
+                        stopMazeStatePolling();
+                    }
+                    
+                    // Show success message
+                    // addMessage('assistant', `Environment switched to ${data.message.split(' to ')[1]}. How can I help you?`);
+                } else {
+                    addMessage('assistant', `Error switching environment: ${data.error}`);
+                    // Reset dropdown
+                    environmentSelect.value = currentEnvironment;
+                }
+            } catch (error) {
+                addMessage('assistant', `Error: ${error.message}`);
+                // Reset dropdown
+                environmentSelect.value = currentEnvironment;
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function renderMazeGrid(state) {
+            if (!state || !state.rooms) return;
+            
+            // Get all rooms with their positions
+            const rooms = Object.entries(state.rooms);
+            
+            // Calculate bounds for scaling
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+            
+            rooms.forEach(([roomId, room]) => {
+                if (room.x !== undefined && room.y !== undefined) {
+                    minX = Math.min(minX, room.x);
+                    maxX = Math.max(maxX, room.x);
+                    minY = Math.min(minY, room.y);
+                    maxY = Math.max(maxY, room.y);
+                }
+            });
+            
+            // Calculate scale and offset for positioning
+            const cellSize = 50;
+            const padding = 20;
+            const rangeX = maxX - minX || 1;
+            const rangeY = maxY - minY || 1;
+            const containerWidth = mazeGridContainer.clientWidth || 300;
+            const containerHeight = mazeGridContainer.clientHeight || 300;
+            const scaleX = (containerWidth - 2 * padding) / Math.max(rangeX + 1, 1);
+            const scaleY = (containerHeight - 2 * padding) / Math.max(rangeY + 1, 1);
+            const scale = Math.min(scaleX, scaleY, cellSize * 1.5); // Limit max cell size
+            const finalCellSize = Math.max(scale, 30); // Minimum cell size
+            
+            // Calculate total grid size needed
+            const gridWidth = padding * 2 + (rangeX + 1) * finalCellSize;
+            const gridHeight = padding * 2 + (rangeY + 1) * finalCellSize;
+            
+            mazeGridContainer.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'maze-grid';
+            grid.style.width = `${gridWidth}px`;
+            grid.style.height = `${gridHeight}px`;
+            
+            rooms.forEach(([roomId, room]) => {
+                if (room.x === undefined || room.y === undefined) return;
+                
+                const cell = document.createElement('div');
+                const isCurrent = state.current_room === roomId;
+                const isVisited = state.visited_rooms.includes(roomId);
+                const hasItems = room && room.items && room.items.length > 0;
+                
+                // Calculate position
+                const x = padding + (room.x - minX) * finalCellSize;
+                const y = padding + (room.y - minY) * finalCellSize;
+                
+                cell.className = 'maze-cell';
+                cell.style.width = `${finalCellSize}px`;
+                cell.style.height = `${finalCellSize}px`;
+                cell.style.left = `${x}px`;
+                cell.style.top = `${y}px`;
+                
+                if (isCurrent) {
+                    cell.classList.add('current');
+                } else if (isVisited) {
+                    cell.classList.add('visited');
+                }
+                
+                // Room label
+                const label = document.createElement('div');
+                label.className = 'maze-cell-label';
+                label.textContent = roomId;
+                cell.appendChild(label);
+                
+                // Cell content
+                const content = document.createElement('div');
+                content.className = 'maze-cell-content';
+                
+                // Agent indicator
+                if (isCurrent) {
+                    const agent = document.createElement('div');
+                    agent.className = 'maze-cell-agent';
+                    agent.textContent = 'A';
+                    content.appendChild(agent);
+                }
+                
+                // Items
+                if (hasItems) {
+                    room.items.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'maze-cell-item';
+                        itemDiv.textContent = item[0].toUpperCase(); // First letter
+                        content.appendChild(itemDiv);
+                    });
+                }
+                
+                cell.appendChild(content);
+                grid.appendChild(cell);
+            });
+            
+            mazeGridContainer.appendChild(grid);
+        }
+
+        async         function updateMazeState(initializeInputs = false) {
+            // Only show maze if current environment is maze
+            if (currentEnvironment !== 'maze') {
+                mazeVisualization.classList.remove('visible');
+                mazeConfig.classList.remove('visible');
+                const mazeTopContainer = document.getElementById('mazeTopContainer');
+                if (mazeTopContainer) {
+                    mazeTopContainer.classList.remove('visible');
+                }
+                return null;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/environment_state?chat_id=${chatId}`);
+                const data = await response.json();
+                
+                if (data.has_state && data.state) {
+                    const mazeTopContainer = document.getElementById('mazeTopContainer');
+                    if (mazeTopContainer) {
+                        mazeTopContainer.classList.add('visible');
+                    }
+                    mazeVisualization.classList.add('visible');
+                    mazeConfig.classList.add('visible');
+                    renderMazeGrid(data.state);
+                    
+                    // Initialize inputs only when requested (on first load or after regeneration)
+                    if (initializeInputs) {
+                        initializeMazeInputs(data.state);
+                    }
+                    
+                    return data.state;
+                } else {
+                    mazeVisualization.classList.remove('visible');
+                    mazeConfig.classList.remove('visible');
+                    const mazeTopContainer = document.getElementById('mazeTopContainer');
+                    if (mazeTopContainer) {
+                        mazeTopContainer.classList.remove('visible');
+                    }
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching maze state:', error);
+                mazeVisualization.classList.remove('visible');
+                mazeConfig.classList.remove('visible');
+                const mazeTopContainer = document.getElementById('mazeTopContainer');
+                if (mazeTopContainer) {
+                    mazeTopContainer.classList.remove('visible');
+                }
+                return null;
+            }
+        }
+
+        function initializeMazeInputs(state) {
+            // Initialize input fields from maze state (only when first loaded)
+            if (state && state.num_rooms) {
+                numRoomsInput.value = state.num_rooms;
+            }
+            if (state && state.seed !== undefined) {
+                seedInput.value = state.seed || '';
+            }
+        }
+
+        function startMazeStatePolling() {
+            if (mazeStateInterval) {
+                clearInterval(mazeStateInterval);
+            }
+            // Poll every 500ms (without initializing inputs)
+            mazeStateInterval = setInterval(() => updateMazeState(false), 500);
+            // Initial update - initialize inputs on first load
+            updateMazeState(true);
+        }
+
+        function stopMazeStatePolling() {
+            if (mazeStateInterval) {
+                clearInterval(mazeStateInterval);
+                mazeStateInterval = null;
+            }
+            if (currentEnvironment !== 'maze') {
+                mazeVisualization.classList.remove('visible');
+                mazeConfig.classList.remove('visible');
+                const mazeTopContainer = document.getElementById('mazeTopContainer');
+                if (mazeTopContainer) {
+                    mazeTopContainer.classList.remove('visible');
+                }
+            }
+        }
+
+        async function loadEnvironments() {
+            try {
+                const response = await fetch(`${API_BASE}/environments`);
+                const data = await response.json();
+                availableEnvironments = data.environments;
+                
+                // Populate dropdown
+                environmentSelect.innerHTML = '';
+                availableEnvironments.forEach(env => {
+                    const option = document.createElement('option');
+                    option.value = env.id;
+                    option.textContent = env.name;
+                    if (env.id === currentEnvironment) {
+                        option.selected = true;
+                    }
+                    environmentSelect.appendChild(option);
+                });
+                
+                // Set up change handler
+                environmentSelect.addEventListener('change', (e) => {
+                    const newEnvId = e.target.value;
+                    if (newEnvId !== currentEnvironment) {
+                        const newEnv = availableEnvironments.find(env => env.id === newEnvId);
+                        if (newEnv) {
+                            showEnvironmentSwitchModal(newEnvId, newEnv.name);
+                        }
+                    }
+                });
+                
+                // Initialize default environment on page load
+                await initializeDefaultEnvironment();
+                
+                // Check if current environment is maze and start polling
+                // This will fetch and display the maze state immediately
+                if (currentEnvironment === 'maze') {
+                    startMazeStatePolling();
+                } else {
+                    // Ensure maze section is hidden if not in maze environment
+                    mazeVisualization.classList.remove('visible');
+                    const mazeTopContainer = document.getElementById('mazeTopContainer');
+                    if (mazeTopContainer) {
+                        mazeTopContainer.classList.remove('visible');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading environments:', error);
+            }
+        }
+
+        async function initializeDefaultEnvironment() {
+            try {
+                // Initialize the default environment (maze with 3 rooms) for the default chat_id
+                const response = await fetch(`${API_BASE}/set_environment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        environment: currentEnvironment,
+                        num_rooms: 3
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('Default environment initialized:', data.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing default environment:', error);
+            }
+        }
+
+        // Load environments on page load
+        loadEnvironments();
+
+        // Initial message
+        // addMessage('assistant', 'Hello! I\'m a helpful assistant with file manipulation capabilities. How can I help you today?');
+    </script>
