@@ -2,6 +2,7 @@ import json
 import random
 from typing import Dict, List, Optional
 from envs import Env
+from core.problem_state_utils import get_problem_state_tool_def, get_edit_type_signature_tool_def
 
 class MazeEnv(Env):
     """Maze exploration environment with random generation."""
@@ -303,6 +304,8 @@ class MazeEnv(Env):
                 }
             })
 
+        tools.append(get_edit_type_signature_tool_def())
+        tools.append(get_problem_state_tool_def())
         return tools
     
     def move(self, direction):
@@ -408,12 +411,15 @@ class MazeEnv(Env):
     
     def get_handlers(self) -> Dict[str, callable]:
         """Return a dictionary mapping tool names to handler functions."""
+        from core.problem_state_utils import edit_problem_state_type_signature, update_problem_state
         return {
             "move": self.move,
             "explore_room": self.explore_room,
             "think_out_loud": self.think_out_loud,
             "read_scroll": self.read_scroll,
-            "press_button": self.press_button
+            "press_button": self.press_button,
+            "edit_problem_state_type_signature": edit_problem_state_type_signature,
+            "update_problem_state": update_problem_state
         }
     
     def get_system_prompt(self) -> str:

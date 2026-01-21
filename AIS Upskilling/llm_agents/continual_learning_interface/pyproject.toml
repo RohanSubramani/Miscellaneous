@@ -1,0 +1,10 @@
+[project]
+name = "continual-learning-interface"
+version = "0.1.0"
+description = "A modular framework for building LLM agents with environment-based interactions"
+requires-python = ">=3.8"
+dependencies = [
+    "flask>=2.0.0",
+    "flask-cors>=3.0.0",
+    "openai>=1.0.0",
+]

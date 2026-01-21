@@ -20,7 +20,7 @@ CORS(app, resources={
     r"/*": {
         "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+        "allow_headers": ["Content-Type", "Authorization"]
     }
 })
 
@@ -130,6 +130,7 @@ def set_environment():
     seed = data.get('seed')
     
     try:
+        from core.problem_state_utils import reset_problem_state
         env = get_environment(env_name, num_rooms=num_rooms, seed=seed)
         environments[chat_id] = env
         
@@ -141,6 +142,9 @@ def set_environment():
         # Clear any pending confirmations
         if chat_id in pending_confirmations:
             del pending_confirmations[chat_id]
+        
+        # Reset problem state
+        reset_problem_state()
         
         return jsonify({
             "success": True,
@@ -182,11 +186,14 @@ def chat():
     
     # Initialize environment and conversation for this chat_id if needed
     if chat_id not in environments:
+        from core.problem_state_utils import reset_problem_state
         env = get_environment('maze', num_rooms=3)  # Default environment
         environments[chat_id] = env
         conversations[chat_id] = [
             {"role": "system", "content": env.get_system_prompt()}
         ]
+        # Reset problem state on first initialization
+        reset_problem_state()
     
     env = environments[chat_id]
     
@@ -350,6 +357,8 @@ def env_reset():
     env = environments[chat_id]
     
     try:
+        from core.problem_state_utils import reset_problem_state
+        
         # Reset the environment state (but don't regenerate maze yet)
         if hasattr(env, 'reset'):
             env.reset()
@@ -362,6 +371,9 @@ def env_reset():
         # Clear any pending confirmations
         if chat_id in pending_confirmations:
             del pending_confirmations[chat_id]
+        
+        # Reset problem state
+        reset_problem_state()
         
         # Write the reset conversation to transcript immediately
         # This ensures transcript.txt reflects the reset state
@@ -419,6 +431,15 @@ def health():
     """Health check endpoint"""
     return jsonify({"status": "ok"})
 
+@app.route('/problem_state', methods=['GET'])
+def get_problem_state():
+    """Get the current problem state."""
+    from core.problem_state_utils import read_problem_state
+    state = read_problem_state()
+    if state is None:
+        return jsonify({"has_state": False, "message": "No problem state updates yet"})
+    return jsonify({"has_state": True, "state": state})
+
 if __name__ == '__main__':
     # Initialize default environment
     env = get_environment('maze', num_rooms=3)
@@ -429,4 +450,4 @@ if __name__ == '__main__':
     print("💬 Chat endpoint: POST http://localhost:8080/chat")
     print(f"🌍 Available environments: {', '.join(AVAILABLE_ENVS.keys())}")
     print("\n" + "="*50 + "\n")
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    app.run(debug=True, host='0.0.0.0', port=8080, use_reloader=False)

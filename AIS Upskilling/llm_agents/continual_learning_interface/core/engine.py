@@ -4,6 +4,7 @@ from core.llm import get_client, get_model_name, get_retrieval_model
 from core.memory import retrieve_relevant_memories, inject_memories
 from core.tools import handle_tool_call, MockToolCall
 from core.utils import write_transcript, clean_conversation_for_structured_response
+from core.problem_state_utils import read_problem_state
 from envs import Env
 
 # Constants
@@ -29,8 +30,27 @@ def generate_continue_question(response_dict):
 
 continue_question = generate_continue_question(cont_response_dict)
 
+def _add_problem_state_to_conversation(conversation: List[Dict]) -> List[Dict]:
+    """Add problem state to the system prompt if it exists."""
+    problem_state = read_problem_state()
+    if problem_state is None:
+        return conversation
+    
+    # Find the system message and append problem state
+    enhanced_conv = conversation.copy()
+    for i, msg in enumerate(enhanced_conv):
+        if msg.get("role") == "system":
+            state_str = json.dumps(problem_state, indent=2)
+            enhanced_conv[i] = {
+                "role": "system",
+                "content": msg["content"] + f"\n\nLast saved problem state:\n{state_str}\n"
+            }
+            break
+    return enhanced_conv
+
 def get_response(conversation: List[Dict], env: Env):
     """Get a response from the LLM using the environment's tools."""
+    conversation = _add_problem_state_to_conversation(conversation)
     client = get_client()
     response = client.chat.completions.create(
         model=get_model_name(),
@@ -46,6 +66,17 @@ def get_structured_response(conversation: List[Dict], web_mode=False) -> Dict:
     
     # Clean the conversation and add the continue question
     cleaned_conv = clean_conversation_for_structured_response(conversation)
+    # Add problem state to the system message if it exists
+    problem_state = read_problem_state()
+    if problem_state is not None:
+        state_str = json.dumps(problem_state, indent=2)
+        for i, msg in enumerate(cleaned_conv):
+            if msg.get("role") == "system":
+                cleaned_conv[i] = {
+                    "role": "system",
+                    "content": msg["content"] + f"\n\nLast saved problem state:\n{state_str}\n"
+                }
+                break
     conv_with_question = cleaned_conv + [{"role": "system", "content": continue_question}]
     
     response = client.responses.create(

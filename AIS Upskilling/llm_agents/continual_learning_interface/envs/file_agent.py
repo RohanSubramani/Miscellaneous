@@ -3,6 +3,7 @@ import json
 from typing import Dict, List
 from pathlib import Path
 from envs import Env
+from core.problem_state_utils import get_problem_state_tool_def, get_edit_type_signature_tool_def
 
 class FileEnv(Env):
     """File manipulation environment."""
@@ -12,7 +13,7 @@ class FileEnv(Env):
     
     def get_tools(self) -> List[Dict]:
         """Return the list of tool definitions."""
-        return [
+        tools = [
             {
                 "type": "function",
                 "function": {
@@ -119,6 +120,9 @@ class FileEnv(Env):
                 }
             }
         ]
+        tools.append(get_edit_type_signature_tool_def())
+        tools.append(get_problem_state_tool_def())
+        return tools
     
     def list_files(self) -> Dict:
         """List all files in the agent's working directory."""
@@ -194,13 +198,16 @@ class FileEnv(Env):
     
     def get_handlers(self) -> Dict[str, callable]:
         """Return a dictionary mapping tool names to handler functions."""
+        from core.problem_state_utils import edit_problem_state_type_signature, update_problem_state
         return {
             "list_files": self.list_files,
             "read": self.read,
             "write": self.write,
             "rename": self.rename,
             "run_python_script": self.run_python_script,
-            "delete_files": self.delete_files
+            "delete_files": self.delete_files,
+            "edit_problem_state_type_signature": edit_problem_state_type_signature,
+            "update_problem_state": update_problem_state
         }
     
     def get_system_prompt(self) -> str:

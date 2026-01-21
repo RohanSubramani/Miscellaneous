@@ -57,7 +57,10 @@ This self-assessment mechanism helps agents work autonomously while knowing when
 ## Installation
 
 ```bash
-pip install -r requirements.txt
+# Create virtual environment and install dependencies
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -r requirements.txt
 ```
 
 **Requirements:**
@@ -71,9 +74,10 @@ You'll also need an OpenAI API key set as `OPENAI_API_KEY` environment variable.
 
 ### Web Server (Recommended)
 
-Start the web server:
+Start the web server (make sure virtual environment is activated):
 
 ```bash
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 python web_server.py
 ```
 

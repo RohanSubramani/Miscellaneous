@@ -73,13 +73,36 @@
             min-height: 0;
         }
 
-        .retrieval-display {
+        .bottom-panels-container {
+            display: flex;
+            flex-direction: row;
             flex: 0 0 300px;
-            background: #FFFFFF;
+            height: 300px;
+            max-height: 300px;
             border-top: 2px solid #E0E0E0;
+            overflow: hidden;
+        }
+
+        .problem-state-display {
+            flex: 0 0 25%;
+            background: #FFFFFF;
             display: flex;
             flex-direction: column;
+            height: 100%;
             min-height: 0;
+            max-height: 100%;
+            overflow: hidden;
+            border-right: 1px solid #E0E0E0;
+        }
+
+        .retrieval-display {
+            flex: 0 0 75%;
+            background: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            max-height: 100%;
             overflow: hidden;
         }
 
@@ -93,6 +116,56 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .problem-state-header {
+            padding: 8px 12px;
+            background: #F5F5F5;
+            border-bottom: 1px solid #E0E0E0;
+            font-weight: 600;
+            font-size: 12px;
+            color: #666666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .problem-state-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 11px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            line-height: 1.4;
+        }
+
+        .problem-state-item {
+            margin-bottom: 8px;
+            padding: 6px;
+            background: #F8F8F8;
+            border-radius: 4px;
+            word-break: break-word;
+        }
+
+        .problem-state-key {
+            font-weight: 600;
+            color: #007AFF;
+            margin-bottom: 4px;
+            font-size: 10px;
+        }
+
+        .problem-state-value {
+            color: #333333;
+            white-space: pre-wrap;
+            font-size: 10px;
+        }
+
+        .problem-state-empty {
+            padding: 12px;
+            text-align: center;
+            color: #999999;
+            font-size: 11px;
+            font-style: italic;
         }
 
         .retrieval-loading {
@@ -770,13 +843,21 @@
             </div>
         </div>
         
-        <div class="retrieval-display" id="retrievalDisplay">
-            <div class="retrieval-header" id="retrievalHeader">
-                <span>Retrieval Model (gpt-5-nano)</span>
-                <span class="retrieval-loading" id="retrievalLoading" style="display: none;"></span>
-                <span id="retrievalStatus"></span>
+        <div class="bottom-panels-container">
+            <div class="problem-state-display" id="problemStateDisplay">
+                <div class="problem-state-header">
+                    <span>Problem State</span>
+                </div>
+                <div class="problem-state-content" id="problemStateContent"></div>
             </div>
-            <div class="retrieval-content" id="retrievalContent"></div>
+            <div class="retrieval-display" id="retrievalDisplay">
+                <div class="retrieval-header" id="retrievalHeader">
+                    <span>Retrieval Model (gpt-5-nano)</span>
+                    <span class="retrieval-loading" id="retrievalLoading" style="display: none;"></span>
+                    <span id="retrievalStatus"></span>
+                </div>
+                <div class="retrieval-content" id="retrievalContent"></div>
+            </div>
         </div>
     </div>
 
@@ -843,9 +924,10 @@
         const retrievalContent = document.getElementById('retrievalContent');
         const retrievalLoading = document.getElementById('retrievalLoading');
         const retrievalStatus = document.getElementById('retrievalStatus');
+        const problemStateContent = document.getElementById('problemStateContent');
         
         const API_PORT = 8080;
-        const API_BASE = `http://localhost:${API_PORT}`;
+        const API_BASE = `http://127.0.0.1:${API_PORT}`;
         
         let chatId = 'default';
         let pendingConfirmation = null;
@@ -1540,6 +1622,7 @@
                 chatContainer.innerHTML = '';
                 retrievalContent.innerHTML = '';
                 retrievalEntryCounter = 0;
+                loadProblemState();
                 adviceMessagesContainer.innerHTML = '';
                 adviceMessages = [];
                 pendingConfirmation = null;
@@ -1656,6 +1739,10 @@
                                     });
                                 } else if (data.type === 'tool_result') {
                                     addToolResult(data);
+                                    // Refresh problem state if update_problem_state was called
+                                    if (data.tool_name === 'update_problem_state') {
+                                        loadProblemState();
+                                    }
                                 } else if (data.type === 'assistant_message') {
                                     // Show agent loading if we haven't yet (no retrieval happened)
                                     if (modelName && !loadingMessage) {
@@ -1847,6 +1934,9 @@
                     } else {
                         stopMazeStatePolling();
                     }
+                    
+                    // Reload problem state after environment change
+                    loadProblemState();
                     
                     // Show success message
                     // addMessage('assistant', `Environment switched to ${data.message.split(' to ')[1]}. How can I help you?`);
@@ -2126,8 +2216,49 @@
             }
         }
 
+        async function loadProblemState() {
+            try {
+                const response = await fetch(`${API_BASE}/problem_state`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                displayProblemState(data);
+            } catch (error) {
+                console.error('Error loading problem state:', error);
+                problemStateContent.innerHTML = '<div class="problem-state-empty">No state yet</div>';
+            }
+        }
+
+        function displayProblemState(data) {
+            if (!data.has_state) {
+                problemStateContent.innerHTML = '<div class="problem-state-empty">No problem state updates yet</div>';
+                return;
+            }
+
+            const state = data.state;
+            let html = '';
+            
+            for (const [key, value] of Object.entries(state)) {
+                html += '<div class="problem-state-item">';
+                html += `<div class="problem-state-key">${escapeHtml(key)}</div>`;
+                const displayValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+                html += `<div class="problem-state-value">${escapeHtml(displayValue)}</div>`;
+                html += '</div>';
+            }
+            
+            problemStateContent.innerHTML = html || '<div class="problem-state-empty">Empty state</div>';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // Load environments on page load
         loadEnvironments();
+        loadProblemState();
 
         // Initial message
         // addMessage('assistant', 'Hello! I\'m a helpful assistant with file manipulation capabilities. How can I help you today?');

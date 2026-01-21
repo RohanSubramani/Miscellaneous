@@ -57,27 +57,31 @@ def handle_tool_call(tool_call, env: Env, web_mode=False, script_confirmation=No
             sig = inspect.signature(handler)
             param_names = list(sig.parameters.keys())
             
-            # Build arguments list based on function signature
-            handler_args = []
-            for param_name in param_names:
-                if param_name in args:
-                    handler_args.append(args[param_name])
-                elif param_name == 'self':
-                    continue
-                else:
-                    pass
-            
-            try:
-                if len(handler_args) == 0:
-                    result = handler()
-                elif len(handler_args) == 1:
-                    result = handler(handler_args[0])
-                elif len(handler_args) == 2:
-                    result = handler(handler_args[0], handler_args[1])
-                else:
-                    result = handler(*handler_args)
-            except Exception as e:
-                result = {"error": f"Error executing tool: {str(e)}"}
+            # Special handling for update_problem_state - pass all args as dict
+            if tool_name == "update_problem_state":
+                result = handler(args)
+            else:
+                # Build arguments list based on function signature
+                handler_args = []
+                for param_name in param_names:
+                    if param_name in args:
+                        handler_args.append(args[param_name])
+                    elif param_name == 'self':
+                        continue
+                    else:
+                        pass
+                
+                try:
+                    if len(handler_args) == 0:
+                        result = handler()
+                    elif len(handler_args) == 1:
+                        result = handler(handler_args[0])
+                    elif len(handler_args) == 2:
+                        result = handler(handler_args[0], handler_args[1])
+                    else:
+                        result = handler(*handler_args)
+                except Exception as e:
+                    result = {"error": f"Error executing tool: {str(e)}"}
 
     if not web_mode:
         print(f"\nTool: {tool_name}\nArgs: {json.dumps(args)}\nResult: {json.dumps(result)}\n")
